@@ -30,26 +30,26 @@ export function CaseSummaryTable({
   const { user } = useAuth();
 
   return (
-    <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden">
-      <div className="overflow-x-auto">
+    <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden print:border-none print:shadow-none print:rounded-none">
+      <div className="overflow-x-auto print:overflow-visible">
         <table className="w-full text-left text-xs border-collapse">
           <thead>
             <tr className="bg-[#1E293B] text-white">
-              <th className="py-2.5 px-3 font-semibold text-center w-10">No.</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">Case ID</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">Date Reported</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">Category</th>
-              <th className="py-2.5 px-3 font-semibold min-w-[200px]">Case Title</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">Location / Area</th>
-              <th className="py-2.5 px-3 font-semibold text-center whitespace-nowrap">Priority</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">PIC</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">Target Date</th>
-              <th className="py-2.5 px-3 font-semibold text-center whitespace-nowrap">Status</th>
-              <th className="py-2.5 px-3 font-semibold min-w-[130px]">Progress</th>
-              <th className="py-2.5 px-3 font-semibold whitespace-nowrap">Last Update</th>
-              <th className="py-2.5 px-3 font-semibold min-w-[180px]">Remarks</th>
+              <th className="py-2.5 px-3 font-semibold text-center w-10 print:py-1 print:px-1.5 print:w-6">No.</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">Case ID</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">Date Reported</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">Category</th>
+              <th className="py-2.5 px-3 font-semibold min-w-[200px] print:min-w-0 print:py-1 print:px-1.5">Case Title</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">Location / Area</th>
+              <th className="py-2.5 px-3 font-semibold text-center whitespace-nowrap print:py-1 print:px-1.5">Priority</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">PIC</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">Target Date</th>
+              <th className="py-2.5 px-3 font-semibold text-center whitespace-nowrap print:py-1 print:px-1.5">Status</th>
+              <th className="py-2.5 px-3 font-semibold min-w-[130px] print:min-w-0 print:py-1 print:px-1.5">Progress</th>
+              <th className="py-2.5 px-3 font-semibold whitespace-nowrap print:py-1 print:px-1.5">Last Update</th>
+              <th className="py-2.5 px-3 font-semibold min-w-[180px] print:min-w-0 print:py-1 print:px-1.5">Remarks</th>
               {showActions && (
-                <th className="py-2.5 px-3 font-semibold text-center whitespace-nowrap">Aksi</th>
+                <th className="py-2.5 px-3 font-semibold text-center whitespace-nowrap print:hidden">Aksi</th>
               )}
             </tr>
           </thead>
@@ -88,7 +88,7 @@ export function CaseSummaryTable({
                   </td>
 
                   {/* 5. Case Title */}
-                  <td className="py-2.5 px-3 font-medium text-slate-800">
+                  <td className="py-2.5 px-3 font-medium text-slate-800 print:whitespace-normal print:break-words">
                     {item.case_title}
                   </td>
 
@@ -130,15 +130,15 @@ export function CaseSummaryTable({
                   </td>
 
                   {/* 11. Progress */}
-                  <td className="py-2.5 px-3">
+                  <td className="py-2.5 px-3 print:whitespace-nowrap">
                     <div className="flex items-center gap-2">
-                      <div className="w-20 bg-slate-200 h-2 rounded-full overflow-hidden">
+                      <div className="w-20 bg-slate-200 h-2 rounded-full overflow-hidden print:w-12">
                         <div
                           className={`h-full ${getProgressBarColor(item.progress)}`}
                           style={{ width: `${Math.min(100, Math.max(0, item.progress))}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-bold text-slate-700 w-8">
+                      <span className="text-[11px] font-bold text-slate-700 w-8 print:text-[8px] print:w-auto">
                         {item.progress}%
                       </span>
                     </div>
@@ -150,13 +150,13 @@ export function CaseSummaryTable({
                   </td>
 
                   {/* 13. Remarks */}
-                  <td className="py-2.5 px-3 text-slate-600 max-w-[200px] truncate" title={item.remarks}>
+                  <td className="py-2.5 px-3 text-slate-600 max-w-[200px] truncate print:max-w-none print:whitespace-normal print:overflow-visible print:break-words" title={item.remarks}>
                     {item.remarks || "-"}
                   </td>
 
                   {/* 14. Action buttons according to RBAC */}
                   {showActions && (
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
+                    <td className="py-2.5 px-3 text-center whitespace-nowrap print:hidden">
                       <div className="flex items-center justify-center gap-1">
                         {/* View Action - Everyone can view */}
                         {onView && (

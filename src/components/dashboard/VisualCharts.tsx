@@ -126,16 +126,16 @@ export function VisualCharts({ cases }: ChartsProps) {
     .slice(0, 5);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6 print:grid-cols-4 print:gap-2.5 print:mb-0">
       {/* Chart 1: Status Case */}
-      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between">
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between print:p-2.5 print:rounded-xl print:shadow-none">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Status Kasus
           </h3>
           <span className="text-[10px] text-slate-400 font-medium">Berdasarkan Status</span>
         </div>
-        <div className="h-56 w-full">
+        <div className="h-56 print:h-44 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart 
               data={statusData} 
@@ -176,14 +176,14 @@ export function VisualCharts({ cases }: ChartsProps) {
       </div>
 
       {/* Chart 2: Kategori Case */}
-      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between">
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between print:p-2.5 print:rounded-xl print:shadow-none">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Kategori Kasus
           </h3>
           <span className="text-[10px] text-slate-400 font-medium">{categoryData.length} Kategori</span>
         </div>
-        <div className="h-56 w-full flex items-center">
+        <div className="h-56 print:h-44 w-full flex items-center">
           <div className="w-1/2 h-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -231,14 +231,14 @@ export function VisualCharts({ cases }: ChartsProps) {
       </div>
 
       {/* Chart 3: Prioritas Case */}
-      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between">
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between print:p-2.5 print:rounded-xl print:shadow-none">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Prioritas Kasus
           </h3>
           <span className="text-[10px] text-slate-400 font-medium">Tingkat Urgensi</span>
         </div>
-        <div className="h-56 w-full flex items-center">
+        <div className="h-56 print:h-44 w-full flex items-center">
           <div className="w-1/2 h-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -288,14 +288,14 @@ export function VisualCharts({ cases }: ChartsProps) {
       </div>
 
       {/* Chart 4: Case by Area */}
-      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between">
+      <div className="bg-white rounded-2xl p-4 shadow-xs border border-slate-200/90 flex flex-col justify-between print:p-2.5 print:rounded-xl print:shadow-none">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Kasus per Area
           </h3>
           <span className="text-[10px] text-slate-400 font-medium">Top 5 Lokasi</span>
         </div>
-        <div className="h-56 w-full">
+        <div className="h-56 print:h-44 w-full">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={areaData}

@@ -31,23 +31,35 @@ body {
   background: #94a3b8;
 }
 
-/* Print & PDF Export Styles */
+/* ==================================================================== */
+/* HIGH-QUALITY EXECUTIVE PDF REPORT PRINT STYLES (A4 LANDSCAPE)         */
+/* ==================================================================== */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 1cm;
+    margin: 8mm 10mm;
   }
 
-  body {
-    background: #ffffff !important;
-    color: #0f172a !important;
-    font-size: 10pt;
+  *, *:before, *:after {
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  html, body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    font-size: 8.5pt !important;
+    line-height: 1.3 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Completely eliminate UI navigation & buttons from PDF report */
   aside,
-  header .print\:hidden,
+  header,
+  nav,
   button,
   .print\:hidden {
     display: none !important;
@@ -57,13 +69,43 @@ body {
     padding: 0 !important;
     margin: 0 !important;
     width: 100% !important;
+    max-width: 100% !important;
+    overflow: visible !important;
   }
 
-  .grid,
-  table,
+  /* Page Break Utilities */
+  .print\:page-break-before-always {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  .print\:page-break-inside-avoid {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  /* Prevent table container horizontal clipping */
+  .overflow-x-auto {
+    overflow: visible !important;
+  }
+
+  table {
+    width: 100% !important;
+    table-layout: auto !important;
+    border-collapse: collapse !important;
+  }
+
+  th, td {
+    padding: 3px 5px !important;
+    font-size: 7.5pt !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  thead {
+    display: table-header-group !important;
+  }
+
   tr {
-    page-break-inside: avoid;
-    break-inside: avoid;
+    page-break-inside: avoid !important;
   }
 }
-

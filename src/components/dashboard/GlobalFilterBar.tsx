@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { Calendar, Clock, RotateCcw, FileDown } from "lucide-react";
+import { Calendar, Clock, RotateCcw, FileDown, SlidersHorizontal } from "lucide-react";
 import { FilterState, MasterArea, MasterCategory } from "@/lib/types";
 
 interface FilterBarProps {
@@ -28,40 +28,89 @@ export function GlobalFilterBar({
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 p-4 mb-5 print:border-none print:shadow-none print:p-0">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-7 gap-3 items-end">
+    <div className="bg-white rounded-2xl shadow-xs border border-slate-200/90 p-4 mb-5 print:hidden">
+      {/* Top Action Toolbar: Title + Last Updated + Reset + Download PDF */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3.5 border-b border-slate-100 gap-3">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600">
+            <SlidersHorizontal className="w-3.5 h-3.5" />
+          </div>
+          <div>
+            <h2 className="text-xs font-black text-slate-900 tracking-wide uppercase">
+              Filter Data Kasus
+            </h2>
+            <p className="text-[10px] text-slate-400">
+              Saring KPI &amp; grafik secara dinamis
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2.5 flex-wrap sm:flex-nowrap">
+          {/* Last Updated Badge */}
+          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-200/90 rounded-xl px-3 py-1.5 text-[11px] text-slate-600 font-medium">
+            <Clock className="w-3.5 h-3.5 text-slate-400" />
+            <span className="text-[10px] text-slate-400">Update:</span>
+            <span className="font-bold text-slate-800">{lastUpdated}</span>
+          </div>
+
+          {/* Reset Filter Button */}
+          <button
+            onClick={onReset}
+            title="Reset Seluruh Filter"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl border border-slate-200/90 text-xs font-bold transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset</span>
+          </button>
+
+          {/* Download PDF Button */}
+          {onExportPdf && (
+            <button
+              onClick={onExportPdf}
+              className="flex items-center gap-1.5 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-xl text-xs font-black shadow-sm transition-all cursor-pointer whitespace-nowrap"
+              title="Cetak atau Simpan Dashboard ke Dokumen PDF"
+            >
+              <FileDown className="w-4 h-4 text-amber-400 shrink-0" />
+              <span>Download PDF</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Bottom Filter Controls (5 Spacious Columns) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-3.5">
         {/* 1. Periode Monitoring */}
-        <div className="lg:col-span-2">
-          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Periode Monitoring
+        <div>
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            Periode Tanggal
           </label>
-          <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-700">
+          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
             <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <input
               type="date"
               value={filters.startDate}
               onChange={(e) => updateField("startDate", e.target.value)}
-              className="bg-transparent border-none p-0 text-xs text-slate-800 focus:outline-none w-28"
+              className="bg-transparent border-none p-0 text-[11px] text-slate-800 focus:outline-none w-24"
             />
-            <span className="text-slate-400">-</span>
+            <span className="text-slate-400 text-xs">-</span>
             <input
               type="date"
               value={filters.endDate}
               onChange={(e) => updateField("endDate", e.target.value)}
-              className="bg-transparent border-none p-0 text-xs text-slate-800 focus:outline-none w-28"
+              className="bg-transparent border-none p-0 text-[11px] text-slate-800 focus:outline-none w-24"
             />
           </div>
         </div>
 
         {/* 2. Project */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
             Project
           </label>
           <select
             value={filters.project}
             onChange={(e) => updateField("project", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
           >
             <option value="Project BAT">Project BAT</option>
             <option value="Semua Project">Semua Project</option>
@@ -70,13 +119,13 @@ export function GlobalFilterBar({
 
         {/* 3. Area / Lokasi */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Area / Lokasi
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            Lokasi / Area
           </label>
           <select
             value={filters.area}
             onChange={(e) => updateField("area", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
           >
             <option value="Semua Area">Semua Area</option>
             {areas.map((a) => (
@@ -89,13 +138,13 @@ export function GlobalFilterBar({
 
         {/* 4. Kategori */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Kategori
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            Kategori Kasus
           </label>
           <select
             value={filters.category}
             onChange={(e) => updateField("category", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
           >
             <option value="Semua Kategori">Semua Kategori</option>
             {categories.map((c) => (
@@ -108,13 +157,13 @@ export function GlobalFilterBar({
 
         {/* 5. Status */}
         <div>
-          <label className="block text-[11px] font-bold text-slate-700 uppercase tracking-wider mb-1">
-            Status
+          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
+            Status Kasus
           </label>
           <select
             value={filters.status}
             onChange={(e) => updateField("status", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
+            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
           >
             <option value="Semua Status">Semua Status</option>
             <option value="Open">Open</option>
@@ -123,28 +172,6 @@ export function GlobalFilterBar({
             <option value="Escalated">Escalated</option>
             <option value="Closed">Closed</option>
           </select>
-        </div>
-
-        {/* 6. Action Buttons: Reset & Export PDF */}
-        <div className="flex items-center gap-2 print:hidden">
-          <button
-            onClick={onReset}
-            title="Reset Filters"
-            className="p-2.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl border border-slate-300 transition-colors cursor-pointer shrink-0"
-          >
-            <RotateCcw className="w-4 h-4" />
-          </button>
-
-          {onExportPdf && (
-            <button
-              onClick={onExportPdf}
-              className="flex-1 py-2 px-3 bg-slate-900 hover:bg-slate-800 text-amber-400 border border-slate-800 rounded-xl text-xs font-black flex items-center justify-center gap-1.5 shadow-sm transition-all cursor-pointer whitespace-nowrap"
-              title="Download Dashboard & Chart dalam format PDF"
-            >
-              <FileDown className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Download PDF</span>
-            </button>
-          )}
         </div>
       </div>
     </div>

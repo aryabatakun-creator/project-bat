@@ -214,8 +214,26 @@ export default function DashboardPage() {
       <VisualCharts cases={filteredCases} />
 
       {/* 4. Data Table Summary */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between">
+      <div className="space-y-2 print:page-break-before-always print:pt-3">
+        {/* Printable Section Header for Page 2 */}
+        <div className="hidden print:block pb-2 mb-2 border-b-2 border-slate-900">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-black text-slate-900 tracking-tight">
+                PROJECT BAT — LAMPIRAN RINCIAN MONITORING KASUS
+              </h2>
+              <p className="text-[10px] text-slate-600 font-medium">
+                Nawakara Perkasa Nusantara &bull; Total {filteredCases.length} Kasus Terfilter
+              </p>
+            </div>
+            <div className="text-right text-[10px] text-slate-500">
+              <span className="font-bold text-slate-800">Tanggal:</span>{" "}
+              {new Date().toLocaleDateString("id-ID", { dateStyle: "medium" })}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between print:hidden">
           <h2 className="text-sm font-bold text-slate-900 tracking-wide">
             Daftar Monitoring Kasus Terkini ({filteredCases.length})
           </h2>
