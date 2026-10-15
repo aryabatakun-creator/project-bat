@@ -1,0 +1,374 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 980" width="100%" height="100%" style="background:#0F172A; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;">
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="cardGrad1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1E293B"/>
+      <stop offset="100%" stop-color="#131D31"/>
+    </linearGradient>
+    <linearGradient id="blueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
+    </linearGradient>
+    <linearGradient id="amberGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F59E0B"/>
+      <stop offset="100%" stop-color="#D97706"/>
+    </linearGradient>
+    <linearGradient id="emeraldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10B981"/>
+      <stop offset="100%" stop-color="#059669"/>
+    </linearGradient>
+    <linearGradient id="roseGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#F43F5E"/>
+      <stop offset="100%" stop-color="#BE123C"/>
+    </linearGradient>
+    
+    <!-- Filter Shadow -->
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="125%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+  </defs>
+
+  <!-- BACKGROUND DECORATION -->
+  <circle cx="150" cy="150" r="250" fill="#3B82F6" opacity="0.05" filter="blur(60px)"/>
+  <circle cx="1250" cy="750" r="300" fill="#10B981" opacity="0.05" filter="blur(80px)"/>
+
+  <!-- ==================== HEADER SECTION ==================== -->
+  <rect x="40" y="30" width="1360" height="110" rx="16" fill="url(#headerGrad)" stroke="#334155" stroke-width="1.5" filter="url(#cardShadow)"/>
+  
+  <rect x="65" y="55" width="56" height="56" rx="12" fill="#2563EB"/>
+  <text x="93" y="91" fill="#FFFFFF" font-size="24" font-weight="bold" text-anchor="middle">BAT</text>
+
+  <text x="140" y="75" fill="#FFFFFF" font-size="24" font-weight="800" letter-spacing="0.5">PROJECT BAT — USER GUIDE WORKFLOW &amp; CASE LIFECYCLE</text>
+  <text x="140" y="102" fill="#94A3B8" font-size="14">Panduan Alur Operasional Sistem Pemantauan, Eskalasi, &amp; Tindak Lanjut Kasus (Nawakara Perkasa Nusantara)</text>
+
+  <!-- Role Badges in Header -->
+  <g transform="translate(980, 58)">
+    <rect x="0" y="0" width="115" height="34" rx="17" fill="#1E293B" stroke="#3B82F6" stroke-width="1.5"/>
+    <circle cx="18" cy="17" r="6" fill="#3B82F6"/>
+    <text x="32" y="22" fill="#93C5FD" font-size="12" font-weight="700">Supervisor</text>
+
+    <rect x="125" y="0" width="125" height="34" rx="17" fill="#1E293B" stroke="#10B981" stroke-width="1.5"/>
+    <circle cx="143" cy="17" r="6" fill="#10B981"/>
+    <text x="157" y="22" fill="#6EE7B7" font-size="12" font-weight="700">Management</text>
+
+    <rect x="260" y="0" width="100" height="34" rx="17" fill="#1E293B" stroke="#F59E0B" stroke-width="1.5"/>
+    <circle cx="278" cy="17" r="6" fill="#F59E0B"/>
+    <text x="292" y="22" fill="#FCD34D" font-size="12" font-weight="700">Admin</text>
+  </g>
+
+  <!-- ==================== 4 MAIN WORKFLOW COLUMNS ==================== -->
+  
+  <!-- COLUMN 1: CASE CREATION -->
+  <g transform="translate(40, 165)">
+    <rect x="0" y="0" width="320" height="520" rx="16" fill="url(#cardGrad1)" stroke="#334155" stroke-width="1.5" filter="url(#cardShadow)"/>
+    
+    <!-- Top Step Pill -->
+    <rect x="20" y="20" width="75" height="28" rx="14" fill="#2563EB"/>
+    <text x="57" y="39" fill="#FFFFFF" font-size="12" font-weight="bold" text-anchor="middle">STEP 1</text>
+    
+    <text x="105" y="40" fill="#94A3B8" font-size="12" font-weight="600">INPUT &amp; REGISTRASI</text>
+    <text x="20" y="80" fill="#FFFFFF" font-size="18" font-weight="bold">Temuan &amp; Input Kasus</text>
+    <text x="20" y="105" fill="#64748B" font-size="13">Pelaporan insiden / kebutuhan unit</text>
+
+    <!-- Role Responsible -->
+    <rect x="20" y="125" width="280" height="36" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="32" y="148" fill="#93C5FD" font-size="12" font-weight="bold">Role: Field Supervisor / Admin</text>
+
+    <!-- Action Items -->
+    <g transform="translate(20, 180)">
+      <!-- Item 1 -->
+      <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#3B82F6"/>
+      <text x="12" y="16" fill="#60A5FA" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+      <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Akses Menu Case Monitoring</text>
+      <text x="32" y="30" fill="#94A3B8" font-size="11">Klik tombol "+ Input Kasus Baru"</text>
+
+      <!-- Item 2 -->
+      <g transform="translate(0, 50)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#3B82F6"/>
+        <text x="12" y="16" fill="#60A5FA" font-size="11" font-weight="bold" text-anchor="middle">2</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Lengkapi Form Kasus</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Pilih Area, Kategori, Prioritas, &amp; PIC</text>
+      </g>
+
+      <!-- Item 3 -->
+      <g transform="translate(0, 100)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#3B82F6"/>
+        <text x="12" y="16" fill="#60A5FA" font-size="11" font-weight="bold" text-anchor="middle">3</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Unggah Foto Bukti Fisik</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Otomatis kompres WebP (150-250KB)</text>
+      </g>
+
+      <!-- Item 4 -->
+      <g transform="translate(0, 150)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#10B981"/>
+        <text x="12" y="16" fill="#34D399" font-size="11" font-weight="bold" text-anchor="middle">✓</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Simpan Kasus</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Auto Case ID: BAT-2026-XXX</text>
+      </g>
+    </g>
+
+    <!-- Output Badge -->
+    <rect x="20" y="445" width="280" height="50" rx="10" fill="#0F172A" stroke="#2563EB" stroke-dasharray="4 4"/>
+    <text x="35" y="467" fill="#60A5FA" font-size="12" font-weight="bold">OUTPUT AWAL:</text>
+    <text x="35" y="485" fill="#E2E8F0" font-size="12">Status: <tspan fill="#38BDF8" font-weight="bold">OPEN</tspan> | Progress: <tspan fill="#94A3B8" font-weight="bold">0% - 25%</tspan></text>
+  </g>
+
+  <!-- ARROW 1 -> 2 -->
+  <g transform="translate(372, 410)">
+    <line x1="0" y1="0" x2="16" y2="0" stroke="#3B82F6" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="16,-6 26,0 16,6" fill="#3B82F6"/>
+  </g>
+
+  <!-- COLUMN 2: MONITORING & ANALYTICS -->
+  <g transform="translate(390, 165)">
+    <rect x="0" y="0" width="310" height="520" rx="16" fill="url(#cardGrad1)" stroke="#334155" stroke-width="1.5" filter="url(#cardShadow)"/>
+    
+    <rect x="20" y="20" width="75" height="28" rx="14" fill="#0D9488"/>
+    <text x="57" y="39" fill="#FFFFFF" font-size="12" font-weight="bold" text-anchor="middle">STEP 2</text>
+    
+    <text x="105" y="40" fill="#94A3B8" font-size="12" font-weight="600">VISIBILITAS DATA</text>
+    <text x="20" y="80" fill="#FFFFFF" font-size="18" font-weight="bold">Dashboard Monitoring</text>
+    <text x="20" y="105" fill="#64748B" font-size="13">Pengawasan performa secara real-time</text>
+
+    <!-- Role Responsible -->
+    <rect x="20" y="125" width="270" height="36" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="32" y="148" fill="#6EE7B7" font-size="12" font-weight="bold">Role: Management, Admin, Spv</text>
+
+    <!-- Action Items -->
+    <g transform="translate(20, 180)">
+      <!-- Item 1 -->
+      <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#0D9488"/>
+      <text x="12" y="16" fill="#2DD4BF" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+      <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Global Filter Bar</text>
+      <text x="32" y="30" fill="#94A3B8" font-size="11">Filter Area, Kategori, Periode, Status</text>
+
+      <!-- Item 2 -->
+      <g transform="translate(0, 50)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#0D9488"/>
+        <text x="12" y="16" fill="#2DD4BF" font-size="11" font-weight="bold" text-anchor="middle">2</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Pantau 8 KPI Cards</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Total, Open, Progress, Escalated, dll</text>
+      </g>
+
+      <!-- Item 3 -->
+      <g transform="translate(0, 100)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#0D9488"/>
+        <text x="12" y="16" fill="#2DD4BF" font-size="11" font-weight="bold" text-anchor="middle">3</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Evaluasi Overdue &amp; Rate</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Pantau Closure Rate (%) &amp; Overdue</text>
+      </g>
+
+      <!-- Item 4 -->
+      <g transform="translate(0, 150)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#0D9488"/>
+        <text x="12" y="16" fill="#2DD4BF" font-size="11" font-weight="bold" text-anchor="middle">4</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Analisis 4 Visual Charts</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Sebaran insiden per kategori &amp; wilayah</text>
+      </g>
+    </g>
+
+    <!-- Output Badge -->
+    <rect x="20" y="445" width="270" height="50" rx="10" fill="#0F172A" stroke="#0D9488" stroke-dasharray="4 4"/>
+    <text x="35" y="467" fill="#2DD4BF" font-size="12" font-weight="bold">KONTROL MANAJEMEN:</text>
+    <text x="35" y="485" fill="#E2E8F0" font-size="12">Deteksi bottleneck &amp; evaluasi cepat</text>
+  </g>
+
+  <!-- ARROW 2 -> 3 -->
+  <g transform="translate(712, 410)">
+    <line x1="0" y1="0" x2="16" y2="0" stroke="#F59E0B" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="16,-6 26,0 16,6" fill="#F59E0B"/>
+  </g>
+
+  <!-- COLUMN 3: FOLLOW UP & ESCALATION -->
+  <g transform="translate(730, 165)">
+    <rect x="0" y="0" width="320" height="520" rx="16" fill="url(#cardGrad1)" stroke="#334155" stroke-width="1.5" filter="url(#cardShadow)"/>
+    
+    <rect x="20" y="20" width="75" height="28" rx="14" fill="#D97706"/>
+    <text x="57" y="39" fill="#FFFFFF" font-size="12" font-weight="bold" text-anchor="middle">STEP 3</text>
+    
+    <text x="105" y="40" fill="#94A3B8" font-size="12" font-weight="600">ACTION &amp; UPDATE</text>
+    <text x="20" y="80" fill="#FFFFFF" font-size="18" font-weight="bold">Tindak Lanjut &amp; Update</text>
+    <text x="20" y="105" fill="#64748B" font-size="13">Eksekusi PIC &amp; rekaman progres</text>
+
+    <!-- Role Responsible -->
+    <rect x="20" y="125" width="280" height="36" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="32" y="148" fill="#FCD34D" font-size="12" font-weight="bold">Role: Supervisor &amp; Assigned PIC</text>
+
+    <!-- Action Items -->
+    <g transform="translate(20, 180)">
+      <!-- Item 1 -->
+      <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#F59E0B"/>
+      <text x="12" y="16" fill="#FBBF24" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+      <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">PIC Eksekusi Tindakan</text>
+      <text x="32" y="30" fill="#94A3B8" font-size="11">Perbaikan alat, pengiriman, jadwal audit</text>
+
+      <!-- Item 2 -->
+      <g transform="translate(0, 50)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#F59E0B"/>
+        <text x="12" y="16" fill="#FBBF24" font-size="11" font-weight="bold" text-anchor="middle">2</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Update Progress (%) &amp; Remarks</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Ubah status jadi "On Progress" (cth: 50%)</text>
+      </g>
+
+      <!-- Item 3 -->
+      <g transform="translate(0, 100)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#F43F5E"/>
+        <text x="12" y="16" fill="#FB7185" font-size="11" font-weight="bold" text-anchor="middle">!</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Kendala Eksternal? (Pending)</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Tunggu vendor, suku cadang, RS MCU</text>
+      </g>
+
+      <!-- Item 4 -->
+      <g transform="translate(0, 150)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#F43F5E"/>
+        <text x="12" y="16" fill="#FB7185" font-size="11" font-weight="bold" text-anchor="middle">▲</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Butuh Izin Biaya? (Escalated)</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Eskalasi ke Manajemen / User BAT</text>
+      </g>
+    </g>
+
+    <!-- Output Badge -->
+    <rect x="20" y="445" width="280" height="50" rx="10" fill="#0F172A" stroke="#F59E0B" stroke-dasharray="4 4"/>
+    <text x="35" y="467" fill="#FBBF24" font-size="12" font-weight="bold">STATUS BERJALAN:</text>
+    <text x="35" y="485" fill="#E2E8F0" font-size="12">On Progress / Pending / Escalated</text>
+  </g>
+
+  <!-- ARROW 3 -> 4 -->
+  <g transform="translate(1062, 410)">
+    <line x1="0" y1="0" x2="16" y2="0" stroke="#10B981" stroke-width="3" stroke-linecap="round"/>
+    <polygon points="16,-6 26,0 16,6" fill="#10B981"/>
+  </g>
+
+  <!-- COLUMN 4: CASE CLOSURE -->
+  <g transform="translate(1080, 165)">
+    <rect x="0" y="0" width="320" height="520" rx="16" fill="url(#cardGrad1)" stroke="#334155" stroke-width="1.5" filter="url(#cardShadow)"/>
+    
+    <rect x="20" y="20" width="75" height="28" rx="14" fill="#059669"/>
+    <text x="57" y="39" fill="#FFFFFF" font-size="12" font-weight="bold" text-anchor="middle">STEP 4</text>
+    
+    <text x="105" y="40" fill="#94A3B8" font-size="12" font-weight="600">SELESAI &amp; ARSIP</text>
+    <text x="20" y="80" fill="#FFFFFF" font-size="18" font-weight="bold">Penyelesaian Kasus</text>
+    <text x="20" y="105" fill="#64748B" font-size="13">Verifikasi final &amp; penutupan kasus</text>
+
+    <!-- Role Responsible -->
+    <rect x="20" y="125" width="280" height="36" rx="8" fill="#1E293B" stroke="#334155"/>
+    <text x="32" y="148" fill="#6EE7B7" font-size="12" font-weight="bold">Role: Supervisor &amp; Admin</text>
+
+    <!-- Action Items -->
+    <g transform="translate(20, 180)">
+      <!-- Item 1 -->
+      <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#10B981"/>
+      <text x="12" y="16" fill="#34D399" font-size="11" font-weight="bold" text-anchor="middle">1</text>
+      <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Pekerjaan Selesai 100%</text>
+      <text x="32" y="30" fill="#94A3B8" font-size="11">Progress diisi 100%</text>
+
+      <!-- Item 2 -->
+      <g transform="translate(0, 50)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#10B981"/>
+        <text x="12" y="16" fill="#34D399" font-size="11" font-weight="bold" text-anchor="middle">2</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Unggah Bukti Hasil Selesai</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Foto hasil perbaikan / dokumen serah terima</text>
+      </g>
+
+      <!-- Item 3 -->
+      <g transform="translate(0, 100)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#10B981"/>
+        <text x="12" y="16" fill="#34D399" font-size="11" font-weight="bold" text-anchor="middle">3</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Ubah Status Menjadi CLOSED</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Catatan penutupan tertera di remarks</text>
+      </g>
+
+      <!-- Item 4 -->
+      <g transform="translate(0, 150)">
+        <circle cx="12" cy="12" r="10" fill="#1E293B" stroke="#10B981"/>
+        <text x="12" y="16" fill="#34D399" font-size="11" font-weight="bold" text-anchor="middle">4</text>
+        <text x="32" y="12" fill="#E2E8F0" font-size="13" font-weight="600">Export Laporan Berkala</text>
+        <text x="32" y="30" fill="#94A3B8" font-size="11">Export ke Excel/CSV untuk MoM / Client</text>
+      </g>
+    </g>
+
+    <!-- Output Badge -->
+    <rect x="20" y="445" width="280" height="50" rx="10" fill="#0F172A" stroke="#10B981" stroke-dasharray="4 4"/>
+    <text x="35" y="467" fill="#34D399" font-size="12" font-weight="bold">HASIL AKHIR:</text>
+    <text x="35" y="485" fill="#E2E8F0" font-size="12">Closure Rate naik, kasus terarsip aman</text>
+  </g>
+
+  <!-- ==================== BOTTOM SECTION: CASE STATUS LIFECYCLE & RBAC ==================== -->
+  
+  <g transform="translate(40, 710)">
+    <rect x="0" y="0" width="1360" height="230" rx="16" fill="url(#cardGrad1)" stroke="#334155" stroke-width="1.5" filter="url(#cardShadow)"/>
+    
+    <!-- Left Box: Status Lifecycle Pipeline -->
+    <text x="30" y="35" fill="#FFFFFF" font-size="16" font-weight="bold">SIKLUS PERUBAHAN STATUS KASUS (STATUS LIFECYCLE)</text>
+    <text x="30" y="55" fill="#94A3B8" font-size="12">Transisi status otomatis merefleksikan KPI pada dashboard utama</text>
+
+    <!-- Status Badges Flow -->
+    <g transform="translate(30, 80)">
+      <!-- 1. OPEN -->
+      <rect x="0" y="0" width="140" height="55" rx="10" fill="#0C4A6E" stroke="#0284C7" stroke-width="1.5"/>
+      <text x="70" y="27" fill="#38BDF8" font-size="14" font-weight="bold" text-anchor="middle">● OPEN</text>
+      <text x="70" y="44" fill="#BAE6FD" font-size="10" text-anchor="middle">Baru dicatat (0-20%)</text>
+
+      <line x1="145" y1="28" x2="175" y2="28" stroke="#64748B" stroke-width="2"/>
+      <polygon points="175,24 183,28 175,32" fill="#64748B"/>
+
+      <!-- 2. ON PROGRESS -->
+      <rect x="185" y="0" width="160" height="55" rx="10" fill="#1E3A8A" stroke="#2563EB" stroke-width="1.5"/>
+      <text x="265" y="27" fill="#60A5FA" font-size="14" font-weight="bold" text-anchor="middle">● ON PROGRESS</text>
+      <text x="265" y="44" fill="#BFDBFE" font-size="10" text-anchor="middle">Sedang dikerjakan (20-99%)</text>
+
+      <line x1="350" y1="28" x2="380" y2="28" stroke="#64748B" stroke-width="2"/>
+      <polygon points="380,24 388,28 380,32" fill="#64748B"/>
+
+      <!-- Branching: PENDING / ESCALATED -->
+      <g transform="translate(390, -25)">
+        <rect x="0" y="0" width="150" height="45" rx="8" fill="#713F12" stroke="#CA8A04" stroke-width="1.5"/>
+        <text x="75" y="22" fill="#FACC15" font-size="12" font-weight="bold" text-anchor="middle">● PENDING</text>
+        <text x="75" y="36" fill="#FEF08A" font-size="9" text-anchor="middle">Hambatan vendor/pihak ke-3</text>
+      </g>
+      <g transform="translate(390, 35)">
+        <rect x="0" y="0" width="150" height="45" rx="8" fill="#881337" stroke="#E11D48" stroke-width="1.5"/>
+        <text x="75" y="22" fill="#FB7185" font-size="12" font-weight="bold" text-anchor="middle">● ESCALATED</text>
+        <text x="75" y="36" fill="#FECDD3" font-size="9" text-anchor="middle">Butuh keputusan manajemen</text>
+      </g>
+
+      <line x1="545" y1="28" x2="575" y2="28" stroke="#64748B" stroke-width="2"/>
+      <polygon points="575,24 583,28 575,32" fill="#64748B"/>
+
+      <!-- 3. CLOSED -->
+      <rect x="585" y="0" width="150" height="55" rx="10" fill="#064E3B" stroke="#059669" stroke-width="1.5"/>
+      <text x="660" y="27" fill="#34D399" font-size="14" font-weight="bold" text-anchor="middle">● CLOSED</text>
+      <text x="660" y="44" fill="#A7F3D0" font-size="10" text-anchor="middle">100% tuntas terverifikasi</text>
+    </g>
+
+    <!-- Divider Line -->
+    <line x1="820" y1="20" x2="820" y2="210" stroke="#334155" stroke-width="1.5"/>
+
+    <!-- Right Box: Master Data Setup (Admin Only) -->
+    <g transform="translate(850, 20)">
+      <rect x="0" y="0" width="115" height="26" rx="6" fill="#F59E0B" opacity="0.15"/>
+      <text x="10" y="18" fill="#FBBF24" font-size="11" font-weight="bold">KHUSUS ADMIN</text>
+
+      <text x="0" y="48" fill="#FFFFFF" font-size="16" font-weight="bold">Pengelolaan Master Data (Menu /master-data)</text>
+      <text x="0" y="68" fill="#94A3B8" font-size="12">Dukungan master data dinamis tanpa perlu modifikasi kode:</text>
+
+      <g transform="translate(0, 85)">
+        <rect x="0" y="0" width="145" height="48" rx="8" fill="#1E293B" stroke="#475569"/>
+        <text x="12" y="20" fill="#E2E8F0" font-size="12" font-weight="bold">Master Area</text>
+        <text x="12" y="36" fill="#94A3B8" font-size="10">Malang, Singosari, dll</text>
+
+        <rect x="160" y="0" width="145" height="48" rx="8" fill="#1E293B" stroke="#475569"/>
+        <text x="172" y="20" fill="#E2E8F0" font-size="12" font-weight="bold">Master Kategori</text>
+        <text x="172" y="36" fill="#94A3B8" font-size="10">Operasional, HSE, dll</text>
+
+        <rect x="320" y="0" width="145" height="48" rx="8" fill="#1E293B" stroke="#475569"/>
+        <text x="332" y="20" fill="#E2E8F0" font-size="12" font-weight="bold">Master PIC</text>
+        <text x="332" y="36" fill="#94A3B8" font-size="10">Erlangga, Rokhim, dll</text>
+      </g>
+    </g>
+  </g>
+</svg>
