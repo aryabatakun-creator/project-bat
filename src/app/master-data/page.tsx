@@ -11,34 +11,14 @@ import {
 import { MasterArea, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
-
-const defaultUserList: UserProfile[] = [
-  {
-    id: "usr-1",
-    full_name: "Admin Operasional",
-    email: "admin@bat-tracker.com",
-    role: "admin",
-  },
-  {
-    id: "usr-2",
-    full_name: "Area Management",
-    email: "management@bat-tracker.com",
-    role: "management",
-  },
-  {
-    id: "usr-3",
-    full_name: "Field Supervisor",
-    email: "supervisor@bat-tracker.com",
-    role: "supervisor",
-  },
-];
+import { getStoredUsers, saveStoredUsers } from "@/lib/userStore";
 
 export default function MasterDataPage() {
   const { user } = useAuth();
   const [areas, setAreas] = useState<MasterArea[]>(initialAreas);
   const [categories, setCategories] = useState<MasterCategory[]>(initialCategories);
   const [pics, setPics] = useState<MasterPic[]>(initialPics);
-  const [users, setUsers] = useState<UserProfile[]>(defaultUserList);
+  const [users, setUsers] = useState<UserProfile[]>(() => getStoredUsers());
 
   // Load from Supabase if available
   useEffect(() => {
@@ -134,8 +114,11 @@ export default function MasterDataPage() {
       full_name: name,
       email,
       role,
+      password: password || "Password123",
     };
-    setUsers((prev) => [newUser, ...prev]);
+    const updated = [newUser, ...users];
+    setUsers(updated);
+    saveStoredUsers(updated);
 
     const supabase = createClient();
     if (supabase) {
@@ -147,9 +130,17 @@ export default function MasterDataPage() {
     }
   };
 
+  const handleUpdatePassword = (id: string, newPassword: string) => {
+    const updated = users.map((u) => (u.id === id ? { ...u, password: newPassword } : u));
+    setUsers(updated);
+    saveStoredUsers(updated);
+  };
+
   const handleDeleteUser = async (id: string) => {
     if (confirm("Hapus akun user ini dari sistem?")) {
-      setUsers((prev) => prev.filter((u) => u.id !== id));
+      const updated = users.filter((u) => u.id !== id);
+      setUsers(updated);
+      saveStoredUsers(updated);
       const supabase = createClient();
       if (supabase) {
         await supabase.from("profiles").delete().eq("id", id);
@@ -210,6 +201,7 @@ export default function MasterDataPage() {
         onDeletePic={handleDeletePic}
         onAddUser={handleAddUser}
         onDeleteUser={handleDeleteUser}
+        onUpdatePassword={handleUpdatePassword}
       />
     </div>
   );

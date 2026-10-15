@@ -2,17 +2,18 @@
 
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ShieldCheck, Lock, Mail, ArrowRight, CheckCircle2, UserCheck } from "lucide-react";
+import { Lock, Mail, ArrowRight, Eye, EyeOff, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
 import { AppRole } from "@/lib/types";
+import { verifyUserCredentials } from "@/lib/userStore";
 
 export default function LoginPage() {
   const router = useRouter();
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [selectedRole, setSelectedRole] = useState<AppRole>("admin");
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -22,6 +23,7 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
+      // 1. Try Supabase Auth if connected
       const supabase = createClient();
       if (supabase && email && password) {
         const { data, error } = await supabase.auth.signInWithPassword({
@@ -39,7 +41,7 @@ export default function LoginPage() {
 
           await login(
             data.user.email || email,
-            (profile?.role as AppRole) || selectedRole,
+            (profile?.role as AppRole) || "supervisor",
             profile?.full_name || email.split("@")[0]
           );
           router.push("/dashboard");
@@ -47,29 +49,24 @@ export default function LoginPage() {
         }
       }
 
-      // Fallback / standard app authentication
-      const name =
-        selectedRole === "admin"
-          ? "Admin Operasional"
-          : selectedRole === "management"
-          ? "Area Management"
-          : "Field Supervisor";
+      // 2. Authenticate against registered users in userStore
+      const verification = verifyUserCredentials(email, password);
+      if (!verification.success || !verification.user) {
+        setErrorMsg(verification.message || "Email atau kata sandi tidak sesuai.");
+        return;
+      }
 
-      await login(email || `${selectedRole}@bat-tracker.com`, selectedRole, name);
+      await login(
+        verification.user.email || email,
+        verification.user.role,
+        verification.user.full_name
+      );
       router.push("/dashboard");
     } catch (err: any) {
       setErrorMsg(err?.message || "Gagal masuk. Silakan periksa kredensial Anda.");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleQuickLogin = async (role: AppRole, roleName: string, defaultEmail: string) => {
-    setEmail(defaultEmail);
-    setSelectedRole(role);
-    setIsLoading(true);
-    await login(defaultEmail, role, roleName);
-    router.push("/dashboard");
   };
 
   return (
@@ -107,7 +104,7 @@ export default function LoginPage() {
         <div className="bg-slate-900/90 border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl backdrop-blur-md">
           <form onSubmit={handleLogin} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400">
+              <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-xl text-xs text-red-400 font-medium">
                 {errorMsg}
               </div>
             )}
@@ -136,72 +133,45 @@ export default function LoginPage() {
               <div className="relative">
                 <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
                 <input
-                  type="password"
+                  type={showPassword ? "text" : "password"}
+                  required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
+                  placeholder="Masukkan kata sandi..."
+                  className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl pl-10 pr-10 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-3 text-slate-500 hover:text-slate-300 focus:outline-none"
+                  title={showPassword ? "Sembunyikan sandi" : "Tampilkan sandi"}
+                >
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
               </div>
-            </div>
-
-            <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Hak Akses / Peran
-              </label>
-              <select
-                value={selectedRole}
-                onChange={(e) => setSelectedRole(e.target.value as AppRole)}
-                className="w-full bg-slate-950/80 border border-slate-700/80 rounded-xl px-3 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="admin">Admin Operasional (Full Akses &amp; Master Data)</option>
-                <option value="management">Management / Eksekutif (Read-Only KPI)</option>
-                <option value="supervisor">Field Supervisor (Input &amp; Update Kasus)</option>
-              </select>
             </div>
 
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full mt-2 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer"
+              className="w-full mt-2 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black rounded-xl text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-500/20 transition-all cursor-pointer disabled:opacity-50"
             >
               <span>{isLoading ? "Memproses..." : "Masuk ke Sistem"}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
           </form>
 
-          {/* Quick Demo Login Preset Buttons */}
-          <div className="mt-6 pt-5 border-t border-slate-800">
-            <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider text-center mb-3">
-              Atau Masuk Cepat (Pilih Akun Role)
-            </span>
-            <div className="grid grid-cols-3 gap-2">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("admin", "Admin Operasional", "admin@bat-tracker.com")}
-                className="p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-bold border border-slate-700 text-center transition-all"
-              >
-                <span className="block text-amber-400 font-extrabold">Admin</span>
-                <span className="text-[9px] text-slate-400">Operasional</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("management", "Area Management", "management@bat-tracker.com")}
-                className="p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-bold border border-slate-700 text-center transition-all"
-              >
-                <span className="block text-emerald-400 font-extrabold">Executive</span>
-                <span className="text-[9px] text-slate-400">Management</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("supervisor", "Field Supervisor", "supervisor@bat-tracker.com")}
-                className="p-2.5 bg-slate-800/80 hover:bg-slate-700 text-slate-200 rounded-xl text-[11px] font-bold border border-slate-700 text-center transition-all"
-              >
-                <span className="block text-sky-400 font-extrabold">Supervisor</span>
-                <span className="text-[9px] text-slate-400">Lapangan</span>
-              </button>
+          {/* Account Guidance Note */}
+          <div className="mt-5 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 space-y-1">
+            <div className="flex items-center gap-1.5 text-slate-300 font-semibold text-xs">
+              <ShieldCheck className="w-3.5 h-3.5 text-amber-500" />
+              <span>Informasi Kredensial Akun</span>
+            </div>
+            <p>
+              Akun pengguna &amp; hak akses dikelola oleh Administrator di menu <strong>Master Data</strong>.
+            </p>
+            <div className="text-[10px] text-slate-400 font-mono pt-1 border-t border-slate-800/80">
+              Default Password Akun: <span className="text-amber-400 font-bold">Password123</span>
             </div>
           </div>
         </div>

@@ -17,6 +17,7 @@ interface MasterTabsProps {
   onDeletePic: (id: string) => void;
   onAddUser?: (name: string, email: string, role: AppRole, password?: string) => void;
   onDeleteUser?: (id: string) => void;
+  onUpdatePassword?: (id: string, newPassword: string) => void;
 }
 
 export function MasterTabs({
@@ -32,6 +33,7 @@ export function MasterTabs({
   onDeletePic,
   onAddUser,
   onDeleteUser,
+  onUpdatePassword,
 }: MasterTabsProps) {
   const [activeTab, setActiveTab] = useState<"area" | "category" | "pic" | "users">("area");
 
@@ -74,8 +76,9 @@ export function MasterTabs({
   const handleAddUserSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newUserName.trim() || !newUserEmail.trim()) return;
+    const finalPassword = newUserPassword.trim() || "Password123";
     if (onAddUser) {
-      onAddUser(newUserName.trim(), newUserEmail.trim(), newUserRole, newUserPassword.trim());
+      onAddUser(newUserName.trim(), newUserEmail.trim(), newUserRole, finalPassword);
     }
     setNewUserName("");
     setNewUserEmail("");
@@ -293,7 +296,7 @@ export function MasterTabs({
           </div>
 
           {/* Form Tambah Akun Baru */}
-          <form onSubmit={handleAddUserSubmit} className="grid grid-cols-1 md:grid-cols-4 gap-2.5">
+          <form onSubmit={handleAddUserSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
             <input
               type="text"
               required
@@ -310,6 +313,13 @@ export function MasterTabs({
               onChange={(e) => setNewUserEmail(e.target.value)}
               className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
             />
+            <input
+              type="text"
+              placeholder="Password (Default: Password123)"
+              value={newUserPassword}
+              onChange={(e) => setNewUserPassword(e.target.value)}
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+            />
             <select
               value={newUserRole}
               onChange={(e) => setNewUserRole(e.target.value as AppRole)}
@@ -324,7 +334,7 @@ export function MasterTabs({
               className="px-4 py-2 bg-slate-900 text-amber-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 hover:bg-slate-800 shadow-xs transition-colors cursor-pointer"
             >
               <UserPlus className="w-3.5 h-3.5" />
-              <span>Buat Akun User</span>
+              <span>Tambah User</span>
             </button>
           </form>
 
@@ -342,7 +352,7 @@ export function MasterTabs({
                   <div className="min-w-0">
                     <div className="text-xs font-bold text-slate-800 truncate">{u.full_name}</div>
                     <div className="text-[10px] text-slate-500 truncate">{u.email || "-"}</div>
-                    <div className="mt-1">
+                    <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                       <span
                         className={`inline-block text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md ${
                           u.role === "admin"
@@ -354,18 +364,38 @@ export function MasterTabs({
                       >
                         {u.role}
                       </span>
+                      <span className="inline-flex items-center gap-1 text-[10px] font-mono text-slate-600 bg-slate-200/80 px-2 py-0.5 rounded-md">
+                        <Key className="w-2.5 h-2.5 text-slate-500" />
+                        <span>{u.password || "Password123"}</span>
+                      </span>
                     </div>
                   </div>
                 </div>
-                {onDeleteUser && (
-                  <button
-                    onClick={() => onDeleteUser(u.id)}
-                    className="p-1.5 text-slate-400 hover:text-red-600 transition-colors cursor-pointer"
-                    title="Hapus Akun"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                )}
+                <div className="flex items-center gap-1 shrink-0">
+                  {onUpdatePassword && (
+                    <button
+                      onClick={() => {
+                        const newPass = prompt(`Ubah kata sandi untuk ${u.full_name}:`, u.password || "Password123");
+                        if (newPass && newPass.trim()) {
+                          onUpdatePassword(u.id, newPass.trim());
+                        }
+                      }}
+                      className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors cursor-pointer"
+                      title="Ganti Kata Sandi"
+                    >
+                      <Key className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                  {onDeleteUser && (
+                    <button
+                      onClick={() => onDeleteUser(u.id)}
+                      className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                      title="Hapus Akun"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                  )}
+                </div>
               </div>
             ))}
           </div>

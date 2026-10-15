@@ -9,6 +9,7 @@ export interface UserProfile {
   full_name: string;
   role: AppRole;
   email?: string;
+  password?: string;
 }
 
 export interface MasterArea {
