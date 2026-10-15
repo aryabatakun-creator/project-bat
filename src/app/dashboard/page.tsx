@@ -54,13 +54,13 @@ export default function DashboardPage() {
         master_categories(name),
         master_areas(name),
         master_pics(name)
-      `),
+      `).order("date_reported", { ascending: false }),
     ]).then(([resAreas, resCats, resPics, resCases]) => {
       if (resAreas.data && resAreas.data.length > 0) setAreas(resAreas.data);
       if (resCats.data && resCats.data.length > 0) setCategories(resCats.data);
       if (resPics.data && resPics.data.length > 0) setPics(resPics.data);
 
-      if (resCases.data && resCases.data.length > 0) {
+      if (resCases.data) {
         const formatted: CaseItem[] = resCases.data.map((c: any) => ({
           ...c,
           category_name: c.master_categories?.name || c.category_name,

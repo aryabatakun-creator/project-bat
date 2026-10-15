@@ -45,13 +45,13 @@ export default function CasesPage() {
         master_categories(name),
         master_areas(name),
         master_pics(name)
-      `),
+      `).order("date_reported", { ascending: false }),
     ]).then(([resAreas, resCats, resPics, resCases]) => {
       if (resAreas.data && resAreas.data.length > 0) setAreas(resAreas.data);
       if (resCats.data && resCats.data.length > 0) setCategories(resCats.data);
       if (resPics.data && resPics.data.length > 0) setPics(resPics.data);
 
-      if (resCases.data && resCases.data.length > 0) {
+      if (resCases.data) {
         const formatted: CaseItem[] = resCases.data.map((c: any) => ({
           ...c,
           category_name: c.master_categories?.name || c.category_name,
@@ -111,6 +111,9 @@ export default function CasesPage() {
           remarks: updated.remarks,
           priority: updated.priority,
           target_date: updated.target_date,
+          category_id: caseData.category_id || null,
+          area_id: caseData.area_id || null,
+          pic_id: caseData.pic_id || null,
         }).eq("id", editingCase.id);
       }
     } else {
@@ -122,9 +125,12 @@ export default function CasesPage() {
         case_id: newCaseId,
         date_reported: new Date().toISOString().split("T")[0],
         case_title: caseData.case_title || "Kasus Baru",
+        category_id: caseData.category_id,
         category_name: caseData.category_name || categories[0]?.name || "Operasional",
+        area_id: caseData.area_id,
         area_name: caseData.area_name || areas[0]?.name || "Malang",
         priority: caseData.priority || "Medium",
+        pic_id: caseData.pic_id,
         pic_name: caseData.pic_name || pics[0]?.name || "PIC",
         target_date: caseData.target_date || new Date().toISOString().split("T")[0],
         status: caseData.status || "Open",
@@ -137,15 +143,37 @@ export default function CasesPage() {
 
       const supabase = createClient();
       if (supabase) {
-        await supabase.from("cases").insert({
-          case_id: newCaseId,
+        const { data: inserted } = await supabase.from("cases").insert({
           case_title: newCase.case_title,
+          category_id: caseData.category_id || null,
+          area_id: caseData.area_id || null,
+          pic_id: caseData.pic_id || null,
           priority: newCase.priority,
           status: newCase.status,
           progress: newCase.progress,
           target_date: newCase.target_date,
           remarks: newCase.remarks,
-        });
+        }).select(`
+          *,
+          master_categories(name),
+          master_areas(name),
+          master_pics(name)
+        `).single();
+
+        if (inserted) {
+          setCases((prev) =>
+            prev.map((c) =>
+              c.id === newCase.id
+                ? {
+                    ...inserted,
+                    category_name: inserted.master_categories?.name || c.category_name,
+                    area_name: inserted.master_areas?.name || c.area_name,
+                    pic_name: inserted.master_pics?.name || c.pic_name,
+                  }
+                : c
+            )
+          );
+        }
       }
     }
   };
