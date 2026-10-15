@@ -8,15 +8,37 @@ import {
   initialCategories, 
   initialPics 
 } from "@/lib/mockData";
-import { MasterArea, MasterCategory, MasterPic } from "@/lib/types";
+import { MasterArea, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
+
+const defaultUserList: UserProfile[] = [
+  {
+    id: "usr-1",
+    full_name: "Admin Operasional",
+    email: "admin@bat-tracker.com",
+    role: "admin",
+  },
+  {
+    id: "usr-2",
+    full_name: "Area Management",
+    email: "management@bat-tracker.com",
+    role: "management",
+  },
+  {
+    id: "usr-3",
+    full_name: "Field Supervisor",
+    email: "supervisor@bat-tracker.com",
+    role: "supervisor",
+  },
+];
 
 export default function MasterDataPage() {
   const { user } = useAuth();
   const [areas, setAreas] = useState<MasterArea[]>(initialAreas);
   const [categories, setCategories] = useState<MasterCategory[]>(initialCategories);
   const [pics, setPics] = useState<MasterPic[]>(initialPics);
+  const [users, setUsers] = useState<UserProfile[]>(defaultUserList);
 
   // Load from Supabase if available
   useEffect(() => {
@@ -27,10 +49,21 @@ export default function MasterDataPage() {
       supabase.from("master_areas").select("*"),
       supabase.from("master_categories").select("*"),
       supabase.from("master_pics").select("*"),
-    ]).then(([resAreas, resCats, resPics]) => {
+      supabase.from("profiles").select("*"),
+    ]).then(([resAreas, resCats, resPics, resUsers]) => {
       if (resAreas.data && resAreas.data.length > 0) setAreas(resAreas.data);
       if (resCats.data && resCats.data.length > 0) setCategories(resCats.data);
       if (resPics.data && resPics.data.length > 0) setPics(resPics.data);
+      if (resUsers.data && resUsers.data.length > 0) {
+        setUsers(
+          resUsers.data.map((u: any) => ({
+            id: u.id,
+            full_name: u.full_name || "User",
+            role: u.role || "supervisor",
+            email: u.email || `${(u.full_name || "user").toLowerCase().replace(/\s+/g, ".")}@bat-tracker.com`,
+          }))
+        );
+      }
     });
   }, []);
 
@@ -94,10 +127,40 @@ export default function MasterDataPage() {
     }
   };
 
+  // Handlers for User Management
+  const handleAddUser = async (name: string, email: string, role: AppRole, password?: string) => {
+    const newUser: UserProfile = {
+      id: `usr-${Date.now()}`,
+      full_name: name,
+      email,
+      role,
+    };
+    setUsers((prev) => [newUser, ...prev]);
+
+    const supabase = createClient();
+    if (supabase) {
+      // Insert profile metadata
+      await supabase.from("profiles").insert({
+        full_name: name,
+        role,
+      });
+    }
+  };
+
+  const handleDeleteUser = async (id: string) => {
+    if (confirm("Hapus akun user ini dari sistem?")) {
+      setUsers((prev) => prev.filter((u) => u.id !== id));
+      const supabase = createClient();
+      if (supabase) {
+        await supabase.from("profiles").delete().eq("id", id);
+      }
+    }
+  };
+
   // RBAC Guard: If not admin, block view
   if (user.role !== "admin") {
     return (
-      <div className="bg-white rounded-2xl p-10 border border-slate-200 text-center max-w-lg mx-auto my-12 shadow-sm">
+      <div className="bg-white rounded-3xl p-10 border border-slate-200 text-center max-w-lg mx-auto my-12 shadow-sm">
         <div className="w-14 h-14 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
           <ShieldAlert className="w-8 h-8" />
         </div>
@@ -105,10 +168,10 @@ export default function MasterDataPage() {
           Akses Dibatasi (Admin Only)
         </h2>
         <p className="text-xs text-slate-500 mb-6">
-          Halaman Master Data hanya dapat dikonfigurasi oleh user dengan hak akses <strong>Admin</strong>. Sesi Anda saat ini login sebagai role: <span className="capitalize font-bold text-slate-800">{user.role}</span>.
+          Halaman Master Data hanya dapat dikonfigurasi oleh user dengan hak akses <strong>Admin</strong>. Sesi Anda saat ini masuk sebagai: <span className="capitalize font-bold text-slate-800">{user.role}</span>.
         </p>
         <p className="text-[11px] text-slate-400">
-          Gunakan pill <em>&quot;POV Role: Admin&quot;</em> di pojok kanan atas header untuk menguji akses sebagai Admin.
+          Silakan keluar dan masuk kembali menggunakan akun berwenang Administrator jika perlu melakukan konfigurasi.
         </p>
       </div>
     );
@@ -117,17 +180,19 @@ export default function MasterDataPage() {
   return (
     <div className="space-y-4">
       {/* Top Header */}
-      <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-xs flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600">
-          <Database className="w-5 h-5" />
-        </div>
-        <div>
-          <h1 className="text-base font-bold text-slate-900 tracking-tight">
-            Konfigurasi Master Data Operasional
-          </h1>
-          <p className="text-xs text-slate-500">
-            Kelola Area / Lokasi, Kategori Kasus, dan Master PIC (Khusus Administrator)
-          </p>
+      <div className="bg-white p-4.5 rounded-2xl border border-slate-200/90 shadow-xs flex items-center justify-between">
+        <div className="flex items-center gap-3.5">
+          <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-600">
+            <Database className="w-5 h-5" />
+          </div>
+          <div>
+            <h1 className="text-base font-black text-slate-900 tracking-tight">
+              Konfigurasi Master Data &amp; Akun User
+            </h1>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Kelola Area Lokasi, Kategori Kasus, Master PIC, dan Manajemen Akun Pengguna (Admin Only)
+            </p>
+          </div>
         </div>
       </div>
 
@@ -136,12 +201,15 @@ export default function MasterDataPage() {
         areas={areas}
         categories={categories}
         pics={pics}
+        users={users}
         onAddArea={handleAddArea}
         onDeleteArea={handleDeleteArea}
         onAddCategory={handleAddCategory}
         onDeleteCategory={handleDeleteCategory}
         onAddPic={handleAddPic}
         onDeletePic={handleDeletePic}
+        onAddUser={handleAddUser}
+        onDeleteUser={handleDeleteUser}
       />
     </div>
   );

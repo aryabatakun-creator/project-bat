@@ -172,17 +172,40 @@ export default function DashboardPage() {
     }
   };
 
+  const handleExportPdf = () => {
+    window.print();
+  };
+
   return (
-    <div className="space-y-4">
-      {/* 1. Global Filter Bar */}
-      <GlobalFilterBar
-        filters={filters}
-        onChange={setFilters}
-        areas={areas}
-        categories={categories}
-        lastUpdated="06/10/2026 14:32"
-        onReset={() => setFilters(defaultFilters)}
-      />
+      <div className="space-y-4">
+        {/* Printable Executive Header */}
+        <div className="hidden print:block pb-3 mb-2 border-b-2 border-slate-900">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-black text-slate-900 tracking-tight">
+                PROJECT BAT — LAPORAN MONITORING KASUS
+              </h1>
+              <p className="text-xs text-slate-600 font-medium">
+                Nawakara Perkasa Nusantara | Filter: {filters.area} &bull; {filters.category} &bull; {filters.status}
+              </p>
+            </div>
+            <div className="text-right text-xs text-slate-500">
+              <span className="font-bold text-slate-800">Tanggal Cetak:</span>{" "}
+              {new Date().toLocaleDateString("id-ID", { dateStyle: "medium" })}
+            </div>
+          </div>
+        </div>
+
+        {/* 1. Global Filter Bar */}
+        <GlobalFilterBar
+          filters={filters}
+          onChange={setFilters}
+          areas={areas}
+          categories={categories}
+          lastUpdated="06/10/2026 14:32"
+          onReset={() => setFilters(defaultFilters)}
+          onExportPdf={handleExportPdf}
+        />
 
       {/* 2. 8 KPI Cards */}
       <KpiCards data={kpiData} />

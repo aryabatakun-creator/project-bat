@@ -311,10 +311,10 @@ export function CaseModal({
             />
           </div>
 
-          {/* Photo Attachments with Browser Auto-Compression */}
+          {/* Photo Attachments */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Lampiran Foto Bukti (Auto-Compress to WebP ~200KB)
+              Lampiran Foto Bukti
             </label>
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-3 bg-slate-50 text-center hover:bg-slate-100/70 transition-colors">
               <input

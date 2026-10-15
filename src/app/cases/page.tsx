@@ -118,12 +118,16 @@ export default function CasesPage() {
       }
     } else {
       // Create new
-      const nextNum = cases.length + 1;
-      const newCaseId = `BAT-2026-${String(nextNum).padStart(3, "0")}`;
+      const reportDate = caseData.date_reported || new Date().toISOString().split("T")[0];
+      const caseYear = new Date(reportDate).getFullYear();
+      const existingYearCases = cases.filter((c) => c.case_id?.startsWith(`BAT-${caseYear}-`));
+      const nextNum = existingYearCases.length + 1;
+      const newCaseId = `BAT-${caseYear}-${String(nextNum).padStart(3, "0")}`;
+
       const newCase: CaseItem = {
         id: `case-${Date.now()}`,
         case_id: newCaseId,
-        date_reported: new Date().toISOString().split("T")[0],
+        date_reported: reportDate,
         case_title: caseData.case_title || "Kasus Baru",
         category_id: caseData.category_id,
         category_name: caseData.category_name || categories[0]?.name || "Operasional",

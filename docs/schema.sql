@@ -46,11 +46,11 @@ CREATE SEQUENCE IF NOT EXISTS case_id_seq START WITH 1;
 CREATE OR REPLACE FUNCTION generate_case_id()
 RETURNS TRIGGER AS $$
 DECLARE
-    current_yr TEXT := TO_CHAR(CURRENT_DATE, 'YYYY');
+    target_yr TEXT := TO_CHAR(COALESCE(NEW.date_reported, CURRENT_DATE), 'YYYY');
     seq_val TEXT;
 BEGIN
     seq_val := LPAD(NEXTVAL('case_id_seq')::TEXT, 3, '0');
-    NEW.case_id := 'BAT-' || current_yr || '-' || seq_val;
+    NEW.case_id := 'BAT-' || target_yr || '-' || seq_val;
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
