@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { ShieldAlert, Database } from "lucide-react";
 import { MasterTabs } from "@/components/master/MasterTabs";
-import { MasterArea, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
+import { MasterArea, MasterLocation, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
 import { getStoredUsers, saveStoredUsers } from "@/lib/userStore";
@@ -12,6 +12,8 @@ import {
   getCachedData,
   createMasterArea,
   removeMasterArea,
+  createMasterLocation,
+  removeMasterLocation,
   createMasterCategory,
   removeMasterCategory,
   createMasterPic,
@@ -21,6 +23,9 @@ import {
 export default function MasterDataPage() {
   const { user } = useAuth();
   const [areas, setAreas] = useState<MasterArea[]>(() => getCachedData().areas);
+  const [locations, setLocations] = useState<MasterLocation[]>(
+    () => getCachedData().locations
+  );
   const [categories, setCategories] = useState<MasterCategory[]>(
     () => getCachedData().categories
   );
@@ -31,6 +36,7 @@ export default function MasterDataPage() {
   useEffect(() => {
     fetchAllAppData().then((res) => {
       setAreas(res.areas);
+      setLocations(res.locations);
       setCategories(res.categories);
       setPics(res.pics);
     });
@@ -47,6 +53,25 @@ export default function MasterDataPage() {
     if (confirm("Hapus area ini dari master data?")) {
       const next = await removeMasterArea(id, areas);
       setAreas(next);
+    }
+  };
+
+  // Handlers for Location
+  const handleAddLocation = async (areaId: string, name: string) => {
+    const selectedArea = areas.find((a) => a.id === areaId) || areas[0];
+    const next = await createMasterLocation(
+      areaId,
+      selectedArea?.name || "",
+      name,
+      locations
+    );
+    setLocations(next);
+  };
+
+  const handleDeleteLocation = async (id: string) => {
+    if (confirm("Hapus lokasi ini dari master data?")) {
+      const next = await removeMasterLocation(id, locations);
+      setLocations(next);
     }
   };
 
@@ -150,7 +175,7 @@ export default function MasterDataPage() {
               Konfigurasi Master Data &amp; Akun User
             </h1>
             <p className="text-xs text-slate-500 mt-0.5">
-              Kelola Area Lokasi, Kategori Kasus, Master PIC, dan Manajemen Akun Pengguna (Admin Only)
+              Kelola Master Area, Master Lokasi, Kategori Kasus, Master PIC, dan Manajemen Akun Pengguna (Admin Only)
             </p>
           </div>
         </div>
@@ -159,11 +184,14 @@ export default function MasterDataPage() {
       {/* Tabs Component */}
       <MasterTabs
         areas={areas}
+        locations={locations}
         categories={categories}
         pics={pics}
         users={users}
         onAddArea={handleAddArea}
         onDeleteArea={handleDeleteArea}
+        onAddLocation={handleAddLocation}
+        onDeleteLocation={handleDeleteLocation}
         onAddCategory={handleAddCategory}
         onDeleteCategory={handleDeleteCategory}
         onAddPic={handleAddPic}

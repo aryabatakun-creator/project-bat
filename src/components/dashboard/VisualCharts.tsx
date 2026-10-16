@@ -80,16 +80,22 @@ export function VisualCharts({ cases }: ChartsProps) {
   ];
 
   // 2. Category Data
+  const totalCases = cases.length || 1;
   const categoryCounts: Record<string, number> = {};
   cases.forEach((c) => {
     const cat = c.category_name || "Lainnya";
     categoryCounts[cat] = (categoryCounts[cat] || 0) + 1;
   });
-  const categoryData = Object.keys(categoryCounts).map((cat, idx) => ({
-    name: cat,
-    value: categoryCounts[cat],
-    color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
-  }));
+  const categoryData = Object.keys(categoryCounts).map((cat, idx) => {
+    const val = categoryCounts[cat];
+    const pct = Math.round((val / totalCases) * 100);
+    return {
+      name: cat,
+      value: val,
+      pct,
+      color: CATEGORY_COLORS[idx % CATEGORY_COLORS.length],
+    };
+  });
 
   // 3. Priority Data
   const priorityCounts: Record<string, number> = {
@@ -105,11 +111,16 @@ export function VisualCharts({ cases }: ChartsProps) {
   });
   const priorityData = Object.keys(priorityCounts)
     .filter((p) => priorityCounts[p] > 0)
-    .map((p) => ({
-      name: p,
-      value: priorityCounts[p],
-      fill: PRIORITY_COLORS[p] || "#94A3B8",
-    }));
+    .map((p) => {
+      const val = priorityCounts[p];
+      const pct = Math.round((val / totalCases) * 100);
+      return {
+        name: p,
+        value: val,
+        pct,
+        fill: PRIORITY_COLORS[p] || "#94A3B8",
+      };
+    });
 
   // 4. Area Data
   const areaCounts: Record<string, number> = {};
@@ -184,10 +195,14 @@ export function VisualCharts({ cases }: ChartsProps) {
           <span className="text-[10px] text-slate-400 font-medium">{categoryData.length} Kategori</span>
         </div>
         <div className="h-56 print:h-44 w-full flex items-center">
-          <div className="w-1/2 h-full">
+          <div className="w-[45%] h-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip 
+                  formatter={(value, name, props) => [
+                    `${value} Kasus (${props?.payload?.pct ?? 0}%)`,
+                    name,
+                  ]}
                   contentStyle={{ 
                     backgroundColor: '#0F172A', 
                     borderRadius: '8px', 
@@ -202,9 +217,9 @@ export function VisualCharts({ cases }: ChartsProps) {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={30}
-                  outerRadius={58}
-                  paddingAngle={3}
+                  innerRadius={26}
+                  outerRadius={52}
+                  paddingAngle={2}
                 >
                   {categoryData.map((entry, index) => (
                     <Cell key={`cat-${index}`} fill={entry.color} />
@@ -213,17 +228,19 @@ export function VisualCharts({ cases }: ChartsProps) {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="w-1/2 max-h-52 overflow-y-auto pl-2 text-[10px] space-y-1.5 scrollbar-thin">
+          <div className="w-[55%] pl-2 text-[10px] flex flex-col justify-center gap-1">
             {categoryData.map((cat, idx) => (
-              <div key={idx} className="flex items-center justify-between gap-1.5 py-0.5 border-b border-slate-50">
+              <div key={idx} className="flex items-center justify-between gap-1 py-0.5 border-b border-slate-100/70 last:border-none">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span
-                    className="w-2.5 h-2.5 rounded-xs shrink-0"
+                    className="w-2 h-2 rounded-xs shrink-0"
                     style={{ backgroundColor: cat.color }}
                   />
-                  <span className="text-slate-600 truncate font-medium">{cat.name}</span>
+                  <span className="text-slate-600 truncate font-medium text-[9.5px] leading-tight">{cat.name}</span>
                 </div>
-                <span className="font-bold text-slate-900 shrink-0 text-xs">{cat.value}</span>
+                <span className="font-bold text-slate-900 shrink-0 text-[10px] whitespace-nowrap">
+                  {cat.value} <span className="text-slate-500 font-semibold">({cat.pct}%)</span>
+                </span>
               </div>
             ))}
           </div>
@@ -239,10 +256,14 @@ export function VisualCharts({ cases }: ChartsProps) {
           <span className="text-[10px] text-slate-400 font-medium">Tingkat Urgensi</span>
         </div>
         <div className="h-56 print:h-44 w-full flex items-center">
-          <div className="w-1/2 h-full">
+          <div className="w-[46%] h-full">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Tooltip 
+                  formatter={(value, name, props) => [
+                    `${value} Kasus (${props?.payload?.pct ?? 0}%)`,
+                    name,
+                  ]}
                   contentStyle={{ 
                     backgroundColor: '#0F172A', 
                     borderRadius: '8px', 
@@ -257,8 +278,8 @@ export function VisualCharts({ cases }: ChartsProps) {
                   nameKey="name"
                   cx="50%"
                   cy="50%"
-                  innerRadius={32}
-                  outerRadius={60}
+                  innerRadius={28}
+                  outerRadius={54}
                   paddingAngle={3}
                 >
                   {priorityData.map((entry, index) => (
@@ -268,18 +289,18 @@ export function VisualCharts({ cases }: ChartsProps) {
               </PieChart>
             </ResponsiveContainer>
           </div>
-          <div className="w-1/2 pl-3 space-y-2">
+          <div className="w-[54%] pl-2 space-y-1.5">
             {priorityData.map((p, idx) => (
-              <div key={idx} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div key={idx} className="flex items-center justify-between gap-1">
+                <div className="flex items-center gap-1.5">
                   <span
                     className="w-2.5 h-2.5 rounded-full shrink-0"
                     style={{ backgroundColor: p.fill }}
                   />
-                  <span className="text-xs font-semibold text-slate-700">{p.name}</span>
+                  <span className="text-[11px] font-semibold text-slate-700">{p.name}</span>
                 </div>
-                <span className="text-xs font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md">
-                  {p.value}
+                <span className="text-[10.5px] font-bold text-slate-900 bg-slate-100 px-1.5 py-0.5 rounded-md whitespace-nowrap">
+                  {p.value} <span className="text-slate-500 font-semibold">({p.pct}%)</span>
                 </span>
               </div>
             ))}
@@ -293,7 +314,7 @@ export function VisualCharts({ cases }: ChartsProps) {
           <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
             Kasus per Area
           </h3>
-          <span className="text-[10px] text-slate-400 font-medium">Top 5 Lokasi</span>
+          <span className="text-[10px] text-slate-400 font-medium">Top 5 Area</span>
         </div>
         <div className="h-56 print:h-44 w-full">
           <ResponsiveContainer width="100%" height="100%">

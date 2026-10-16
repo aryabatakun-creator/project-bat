@@ -6,6 +6,7 @@ import {
   CaseItem,
   CaseAttachment,
   MasterArea,
+  MasterLocation,
   MasterCategory,
   MasterPic,
   PriorityLevel,
@@ -20,6 +21,7 @@ interface CaseModalProps {
   onSave: (caseData: Partial<CaseItem>, photoFiles?: File[]) => Promise<void>;
   initialData?: CaseItem | null;
   areas: MasterArea[];
+  locations?: MasterLocation[];
   categories: MasterCategory[];
   pics: MasterPic[];
 }
@@ -30,6 +32,7 @@ export function CaseModal({
   onSave,
   initialData,
   areas,
+  locations = [],
   categories,
   pics,
 }: CaseModalProps) {
@@ -37,6 +40,7 @@ export function CaseModal({
   const [dateReported, setDateReported] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [areaId, setAreaId] = useState("");
+  const [locationId, setLocationId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("Medium");
   const [picId, setPicId] = useState("");
   const [targetDate, setTargetDate] = useState("");
@@ -51,6 +55,19 @@ export function CaseModal({
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Helper to get locations belonging to an area
+  const getLocationsForArea = (targetAreaId: string) => {
+    const selectedAreaObj = areas.find((a) => a.id === targetAreaId);
+    const filtered = locations.filter(
+      (l) =>
+        l.area_id === targetAreaId ||
+        (selectedAreaObj &&
+          (l.area_name === selectedAreaObj.name ||
+            selectedAreaObj.name.startsWith(l.area_name || "")))
+    );
+    return filtered.length > 0 ? filtered : locations;
+  };
 
   // Only reset form when modal opens or initialData changes
   useEffect(() => {
@@ -67,12 +84,21 @@ export function CaseModal({
           categories[0]?.id ||
           ""
       );
-      setAreaId(
+      const resolvedAreaId =
         initialData.area_id ||
-          areas.find((a) => a.name === initialData.area_name)?.id ||
-          areas[0]?.id ||
-          ""
-      );
+        areas.find((a) => a.name === initialData.area_name)?.id ||
+        areas[0]?.id ||
+        "";
+      setAreaId(resolvedAreaId);
+
+      const areaLocs = getLocationsForArea(resolvedAreaId);
+      const resolvedLocId =
+        initialData.location_id ||
+        locations.find((l) => l.name === initialData.location_name)?.id ||
+        areaLocs[0]?.id ||
+        "";
+      setLocationId(resolvedLocId);
+
       setPriority(initialData.priority || "Medium");
       setPicId(
         initialData.pic_id ||
@@ -89,7 +115,10 @@ export function CaseModal({
       setTitle("");
       setDateReported(new Date().toISOString().split("T")[0]);
       setCategoryId(categories[0]?.id || "");
-      setAreaId(areas[0]?.id || "");
+      const defaultAreaId = areas[0]?.id || "";
+      setAreaId(defaultAreaId);
+      const areaLocs = getLocationsForArea(defaultAreaId);
+      setLocationId(areaLocs[0]?.id || "");
       setPriority("Medium");
       setPicId(pics[0]?.id || "");
       setTargetDate(
@@ -106,6 +135,14 @@ export function CaseModal({
   }, [initialData, isOpen]);
 
   if (!isOpen) return null;
+
+  const availableLocations = getLocationsForArea(areaId);
+
+  const handleAreaChange = (newAreaId: string) => {
+    setAreaId(newAreaId);
+    const nextLocs = getLocationsForArea(newAreaId);
+    setLocationId(nextLocs[0]?.id || "");
+  };
 
   const handlePhotoSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
@@ -169,6 +206,8 @@ export function CaseModal({
       const selectedCat =
         categories.find((c) => c.id === categoryId) || categories[0];
       const selectedArea = areas.find((a) => a.id === areaId) || areas[0];
+      const selectedLocation =
+        locations.find((l) => l.id === locationId) || availableLocations[0];
       const selectedPic = pics.find((p) => p.id === picId) || pics[0];
 
       await onSave(
@@ -179,6 +218,8 @@ export function CaseModal({
           category_name: selectedCat?.name || "",
           area_id: selectedArea?.id || areaId,
           area_name: selectedArea?.name || "",
+          location_id: selectedLocation?.id || locationId,
+          location_name: selectedLocation?.name || "",
           priority,
           pic_id: selectedPic?.id || picId,
           pic_name: selectedPic?.name || "",
@@ -239,6 +280,42 @@ export function CaseModal({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Area */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Area *
+              </label>
+              <select
+                value={areaId}
+                onChange={(e) => handleAreaChange(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+              >
+                {areas.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Lokasi (Multi Lokasi per Area) */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
+                Lokasi *
+              </label>
+              <select
+                value={locationId}
+                onChange={(e) => setLocationId(e.target.value)}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+              >
+                {availableLocations.map((loc) => (
+                  <option key={loc.id} value={loc.id}>
+                    {loc.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Kategori */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
@@ -252,24 +329,6 @@ export function CaseModal({
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Lokasi / Area */}
-            <div>
-              <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Area / Lokasi *
-              </label>
-              <select
-                value={areaId}
-                onChange={(e) => setAreaId(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
-              >
-                {areas.map((a) => (
-                  <option key={a.id} value={a.id}>
-                    {a.name}
                   </option>
                 ))}
               </select>

@@ -3,23 +3,28 @@ import {
   CaseItem,
   CaseAttachment,
   MasterArea,
+  MasterLocation,
   MasterCategory,
   MasterPic,
 } from "./types";
 import {
   initialAreas,
+  initialLocations,
   initialCategories,
   initialPics,
   initialCases,
 } from "./mockData";
 
 const KEYS = {
-  CASES: "bat_cache_cases_v2",
-  AREAS: "bat_cache_areas_v2",
-  CATEGORIES: "bat_cache_categories_v2",
-  PICS: "bat_cache_pics_v2",
-  DELETED_IDS: "bat_deleted_ids_v2",
+  CASES: "bat_cache_cases_v3",
+  AREAS: "bat_cache_areas_v3",
+  LOCATIONS: "bat_cache_locations_v3",
+  CATEGORIES: "bat_cache_categories_v3",
+  PICS: "bat_cache_pics_v3",
+  DELETED_IDS: "bat_deleted_ids_v3",
 };
+
+export const STORAGE_BUCKET = "case-photos";
 
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -77,6 +82,10 @@ export function getCachedData() {
     areas: readLocal<MasterArea[]>(KEYS.AREAS, initialAreas).filter(
       (a) => !deleted.has(a.id)
     ),
+    locations: readLocal<MasterLocation[]>(
+      KEYS.LOCATIONS,
+      initialLocations
+    ).filter((l) => !deleted.has(l.id)),
     categories: readLocal<MasterCategory[]>(
       KEYS.CATEGORIES,
       initialCategories
@@ -92,6 +101,7 @@ export function getCachedData() {
 
 export async function fetchAllAppData(): Promise<{
   areas: MasterArea[];
+  locations: MasterLocation[];
   categories: MasterCategory[];
   pics: MasterPic[];
   cases: CaseItem[];
@@ -106,23 +116,28 @@ export async function fetchAllAppData(): Promise<{
   }
 
   try {
-    const [resAreas, resCats, resPics, resCases] = await Promise.all([
-      supabase.from("master_areas").select("*").order("name"),
-      supabase.from("master_categories").select("*").order("name"),
-      supabase.from("master_pics").select("*").order("name"),
-      supabase
-        .from("cases")
-        .select(
-          `
+    const [resAreas, resLocations, resCats, resPics, resCases] =
+      await Promise.all([
+        supabase.from("master_areas").select("*").order("name"),
+        supabase
+          .from("master_locations")
+          .select("*, master_areas(name)")
+          .order("name"),
+        supabase.from("master_categories").select("*").order("name"),
+        supabase.from("master_pics").select("*").order("name"),
+        supabase
+          .from("cases")
+          .select(
+            `
           *,
           master_categories(name),
           master_areas(name),
           master_pics(name),
           case_attachments(*)
         `
-        )
-        .order("date_reported", { ascending: false }),
-    ]);
+          )
+          .order("date_reported", { ascending: false }),
+      ]);
 
     const hasValidConnection = !resCases.error;
 
@@ -141,7 +156,36 @@ export async function fetchAllAppData(): Promise<{
       writeLocal(KEYS.AREAS, finalAreas);
     }
 
-    // 2. Merge Categories
+    // 2. Merge Locations
+    let finalLocations = cached.locations;
+    if (!resLocations.error && resLocations.data && resLocations.data.length > 0) {
+      const dbLocations: MasterLocation[] = resLocations.data
+        .filter((l: any) => !deleted.has(l.id))
+        .map((l: any) => ({
+          id: l.id,
+          area_id: l.area_id,
+          area_name:
+            l.master_areas?.name ||
+            l.area_name ||
+            finalAreas.find((a) => a.id === l.area_id)?.name ||
+            "Malang",
+          name: l.name,
+          created_at: l.created_at,
+        }));
+      const localOnlyLocations = cached.locations.filter(
+        (ll) =>
+          !isValidUuid(ll.id) &&
+          !dbLocations.some(
+            (dl) =>
+              dl.name.toLowerCase() === ll.name.toLowerCase() &&
+              dl.area_name.toLowerCase() === ll.area_name.toLowerCase()
+          )
+      );
+      finalLocations = [...dbLocations, ...localOnlyLocations];
+      writeLocal(KEYS.LOCATIONS, finalLocations);
+    }
+
+    // 3. Merge Categories
     let finalCategories = cached.categories;
     if (resCats.data && resCats.data.length > 0) {
       const dbCats: MasterCategory[] = resCats.data.filter(
@@ -156,7 +200,7 @@ export async function fetchAllAppData(): Promise<{
       writeLocal(KEYS.CATEGORIES, finalCategories);
     }
 
-    // 3. Merge PICs
+    // 4. Merge PICs
     let finalPics = cached.pics;
     if (resPics.data && resPics.data.length > 0) {
       const dbPics: MasterPic[] = resPics.data.filter(
@@ -171,7 +215,7 @@ export async function fetchAllAppData(): Promise<{
       writeLocal(KEYS.PICS, finalPics);
     }
 
-    // 4. Merge Cases
+    // 5. Merge Cases
     let finalCases = cached.cases;
     if (resCases.data) {
       const dbCases: CaseItem[] = resCases.data
@@ -187,19 +231,35 @@ export async function fetchAllAppData(): Promise<{
             ? c.case_attachments
             : [];
 
-          // Merge DB attachments with any locally stored attachments
           const localAttachments = localMatch?.attachments || [];
           const mergedAttachments =
             dbAttachments.length >= localAttachments.length
               ? dbAttachments
               : localAttachments;
 
-          // If local version was edited and RLS prevented DB update, preserve local changes
+          const rawAreaName =
+            c.master_areas?.name ||
+            c.area_name ||
+            localMatch?.area_name ||
+            "-";
+
+          // Parse legacy "Malang - KR4" into Area: "Malang", Location: "KR4" if location_name is empty
+          let parsedArea = rawAreaName;
+          let parsedLocation =
+            c.location_name || localMatch?.location_name || "";
+          if (!parsedLocation && rawAreaName.includes(" - ")) {
+            const parts = rawAreaName.split(" - ");
+            parsedArea = parts[0].trim();
+            parsedLocation = parts.slice(1).join(" - ").trim();
+          }
+
           if (localMatch && localMatch._localModified) {
             return {
               ...c,
               ...localMatch,
               id: c.id,
+              area_name: localMatch.area_name || parsedArea,
+              location_name: localMatch.location_name || parsedLocation || "-",
               attachments: mergedAttachments,
             };
           }
@@ -211,18 +271,15 @@ export async function fetchAllAppData(): Promise<{
               c.category_name ||
               localMatch?.category_name ||
               "-",
-            area_name:
-              c.master_areas?.name ||
-              c.area_name ||
-              localMatch?.area_name ||
-              "-",
+            area_name: parsedArea,
+            location_id: c.location_id || localMatch?.location_id,
+            location_name: parsedLocation || "-",
             pic_name:
               c.master_pics?.name || c.pic_name || localMatch?.pic_name || "-",
             attachments: mergedAttachments,
           };
         });
 
-      // Preserve locally created cases that haven't synced to Supabase yet
       const localOnlyCases = cached.cases.filter(
         (lc) =>
           !dbCases.some(
@@ -236,6 +293,7 @@ export async function fetchAllAppData(): Promise<{
 
     return {
       areas: finalAreas,
+      locations: finalLocations,
       categories: finalCategories,
       pics: finalPics,
       cases: finalCases,
@@ -276,36 +334,94 @@ async function resolveMasterId(
   return created?.id || null;
 }
 
+/**
+ * Uploads photo file to Supabase Storage bucket `case-photos` and returns public URL.
+ * Falls back to Base64 DataURL if bucket does not exist yet.
+ */
+async function uploadPhotoToStorage(
+  file: File,
+  caseIdentifier: string
+): Promise<string> {
+  const supabase = createClient();
+  if (supabase) {
+    try {
+      const cleanName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+      const filePath = `cases/${caseIdentifier}/${Date.now()}_${cleanName}`;
+
+      const { error: uploadErr } = await supabase.storage
+        .from(STORAGE_BUCKET)
+        .upload(filePath, file, {
+          contentType: file.type || "image/webp",
+          upsert: true,
+        });
+
+      if (!uploadErr) {
+        const { data: pubData } = supabase.storage
+          .from(STORAGE_BUCKET)
+          .getPublicUrl(filePath);
+        if (pubData?.publicUrl) {
+          return pubData.publicUrl;
+        }
+      } else {
+        console.warn(
+          "Supabase Storage upload notice (using DataURL fallback):",
+          uploadErr.message
+        );
+      }
+    } catch (err) {
+      console.warn("Storage upload exception, using DataURL fallback:", err);
+    }
+  }
+  return await fileToDataUrl(file);
+}
+
 export async function saveCaseItem(
   caseData: Partial<CaseItem>,
   photoFiles: File[] = [],
   editingCase?: CaseItem | null,
   currentCases: CaseItem[] = []
 ): Promise<{ updatedCases: CaseItem[]; savedCase: CaseItem }> {
-  // 1. Convert newly uploaded photo files into persistent Base64 DataURL attachments
+  const baseList =
+    currentCases.length > 0 ? currentCases : getCachedData().cases;
+
+  const reportDate =
+    caseData.date_reported ||
+    editingCase?.date_reported ||
+    new Date().toISOString().split("T")[0];
+  const caseYear = new Date(reportDate).getFullYear();
+  const existingYearCases = baseList.filter((c) =>
+    c.case_id?.startsWith(`BAT-${caseYear}-`)
+  );
+  let maxSeq = existingYearCases.length;
+  existingYearCases.forEach((c) => {
+    const parts = (c.case_id || "").split("-");
+    const num = parseInt(parts[2] || "0", 10);
+    if (!isNaN(num) && num > maxSeq) maxSeq = num;
+  });
+  const targetCaseId =
+    editingCase?.case_id ||
+    `BAT-${caseYear}-${String(maxSeq + 1).padStart(3, "0")}`;
+
+  // 1. Upload photo files to Supabase Storage bucket `case-photos` (with Base64 fallback)
   const newAttachments: CaseAttachment[] = [];
   for (const file of photoFiles) {
     try {
-      const dataUrl = await fileToDataUrl(file);
+      const fileUrl = await uploadPhotoToStorage(file, targetCaseId);
       newAttachments.push({
         id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
         case_id: editingCase?.id || "",
-        file_url: dataUrl,
+        file_url: fileUrl,
         file_name: file.name,
         file_size_kb: Math.round(file.size / 1024),
         mime_type: file.type || "image/webp",
         created_at: new Date().toISOString(),
       });
     } catch (err) {
-      console.error("Failed converting photo file:", err);
+      console.error("Failed processing photo file:", err);
     }
   }
 
-  const baseList =
-    currentCases.length > 0 ? currentCases : getCachedData().cases;
-
   if (editingCase) {
-    // Update existing case
     const existingAttachments =
       caseData.attachments !== undefined
         ? caseData.attachments
@@ -341,7 +457,7 @@ export async function saveCaseItem(
         resolveMasterId("master_pics", updatedCase.pic_id, updatedCase.pic_name),
       ]);
 
-      const updatePayload: Record<string, any> = {
+      const baseUpdatePayload: Record<string, any> = {
         case_title: updatedCase.case_title,
         status: updatedCase.status,
         progress: updatedCase.progress,
@@ -349,14 +465,45 @@ export async function saveCaseItem(
         priority: updatedCase.priority,
         target_date: updatedCase.target_date,
       };
-      if (resolvedCatId) updatePayload.category_id = resolvedCatId;
-      if (resolvedAreaId) updatePayload.area_id = resolvedAreaId;
-      if (resolvedPicId) updatePayload.pic_id = resolvedPicId;
+      if (resolvedCatId) baseUpdatePayload.category_id = resolvedCatId;
+      if (resolvedAreaId) baseUpdatePayload.area_id = resolvedAreaId;
+      if (resolvedPicId) baseUpdatePayload.pic_id = resolvedPicId;
 
-      const query = supabase.from("cases").update(updatePayload);
-      const { data: updatedRows } = isValidUuid(editingCase.id)
-        ? await query.eq("id", editingCase.id).select("id")
-        : await query.eq("case_id", editingCase.case_id).select("id");
+      const fullUpdatePayload: Record<string, any> = {
+        ...baseUpdatePayload,
+        location_name: updatedCase.location_name || null,
+        location_id: isValidUuid(updatedCase.location_id)
+          ? updatedCase.location_id
+          : null,
+      };
+
+      let { data: updatedRows, error: updateErr } = isValidUuid(editingCase.id)
+        ? await supabase
+            .from("cases")
+            .update(fullUpdatePayload)
+            .eq("id", editingCase.id)
+            .select("id")
+        : await supabase
+            .from("cases")
+            .update(fullUpdatePayload)
+            .eq("case_id", editingCase.case_id)
+            .select("id");
+
+      // Fallback if location_name column hasn't been added to DB yet
+      if (updateErr) {
+        const retry = isValidUuid(editingCase.id)
+          ? await supabase
+              .from("cases")
+              .update(baseUpdatePayload)
+              .eq("id", editingCase.id)
+              .select("id")
+          : await supabase
+              .from("cases")
+              .update(baseUpdatePayload)
+              .eq("case_id", editingCase.case_id)
+              .select("id");
+        updatedRows = retry.data;
+      }
 
       if (updatedRows && updatedRows.length > 0) {
         updatedCase = { ...updatedCase, _localModified: false };
@@ -381,21 +528,6 @@ export async function saveCaseItem(
 
     return { updatedCases: nextCases, savedCase: updatedCase };
   } else {
-    // Create new case
-    const reportDate =
-      caseData.date_reported || new Date().toISOString().split("T")[0];
-    const caseYear = new Date(reportDate).getFullYear();
-    const existingYearCases = baseList.filter((c) =>
-      c.case_id?.startsWith(`BAT-${caseYear}-`)
-    );
-    let maxSeq = existingYearCases.length;
-    existingYearCases.forEach((c) => {
-      const parts = (c.case_id || "").split("-");
-      const num = parseInt(parts[2] || "0", 10);
-      if (!isNaN(num) && num > maxSeq) maxSeq = num;
-    });
-    const newCaseId = `BAT-${caseYear}-${String(maxSeq + 1).padStart(3, "0")}`;
-
     const tempId = `case-${Date.now()}`;
     const attachmentsWithCaseId = newAttachments.map((a) => ({
       ...a,
@@ -404,13 +536,15 @@ export async function saveCaseItem(
 
     let newCase: CaseItem = {
       id: tempId,
-      case_id: newCaseId,
+      case_id: targetCaseId,
       date_reported: reportDate,
       case_title: caseData.case_title || "Kasus Baru",
       category_id: caseData.category_id,
       category_name: caseData.category_name || "Operasional",
       area_id: caseData.area_id,
       area_name: caseData.area_name || "Malang",
+      location_id: caseData.location_id,
+      location_name: caseData.location_name || "-",
       priority: caseData.priority || "Medium",
       pic_id: caseData.pic_id,
       pic_name: caseData.pic_name || "PIC",
@@ -438,21 +572,31 @@ export async function saveCaseItem(
         resolveMasterId("master_pics", newCase.pic_id, newCase.pic_name),
       ]);
 
-      const { data: inserted, error } = await supabase
+      const baseInsertPayload: Record<string, any> = {
+        case_id: newCase.case_id,
+        date_reported: newCase.date_reported,
+        case_title: newCase.case_title,
+        category_id: resolvedCatId,
+        area_id: resolvedAreaId,
+        pic_id: resolvedPicId,
+        priority: newCase.priority,
+        status: newCase.status,
+        progress: newCase.progress,
+        target_date: newCase.target_date,
+        remarks: newCase.remarks,
+      };
+
+      const fullInsertPayload: Record<string, any> = {
+        ...baseInsertPayload,
+        location_name: newCase.location_name || null,
+        location_id: isValidUuid(newCase.location_id)
+          ? newCase.location_id
+          : null,
+      };
+
+      let { data: inserted, error } = await supabase
         .from("cases")
-        .insert({
-          case_id: newCase.case_id,
-          date_reported: newCase.date_reported,
-          case_title: newCase.case_title,
-          category_id: resolvedCatId,
-          area_id: resolvedAreaId,
-          pic_id: resolvedPicId,
-          priority: newCase.priority,
-          status: newCase.status,
-          progress: newCase.progress,
-          target_date: newCase.target_date,
-          remarks: newCase.remarks,
-        })
+        .insert(fullInsertPayload)
         .select(
           `
           *,
@@ -463,8 +607,21 @@ export async function saveCaseItem(
         )
         .maybeSingle();
 
+      // Fallback if location_name column hasn't been added in DB yet
       if (error) {
-        console.warn("Supabase insert case notice (saved locally):", error.message);
+        const retry = await supabase
+          .from("cases")
+          .insert(baseInsertPayload)
+          .select(
+            `
+            *,
+            master_categories(name),
+            master_areas(name),
+            master_pics(name)
+          `
+          )
+          .maybeSingle();
+        inserted = retry.data;
       }
 
       if (inserted) {
@@ -494,6 +651,7 @@ export async function saveCaseItem(
           category_name:
             inserted.master_categories?.name || newCase.category_name,
           area_name: inserted.master_areas?.name || newCase.area_name,
+          location_name: inserted.location_name || newCase.location_name,
           pic_name: inserted.master_pics?.name || newCase.pic_name,
           attachments: savedAttachments,
         };
@@ -566,6 +724,67 @@ export async function removeMasterArea(
       await supabase.from("master_areas").delete().eq("id", id);
     } else if (target?.name) {
       await supabase.from("master_areas").delete().eq("name", target.name);
+    }
+  }
+  return next;
+}
+
+export async function createMasterLocation(
+  areaId: string,
+  areaName: string,
+  name: string,
+  current: MasterLocation[]
+): Promise<MasterLocation[]> {
+  let newLoc: MasterLocation = {
+    id: `loc-${Date.now()}`,
+    area_id: areaId,
+    area_name: areaName,
+    name,
+  };
+  const supabase = createClient();
+  if (supabase) {
+    const resolvedAreaId = await resolveMasterId("master_areas", areaId, areaName);
+    const { data } = await supabase
+      .from("master_locations")
+      .insert({
+        area_id: resolvedAreaId,
+        area_name: areaName,
+        name,
+      })
+      .select("*")
+      .maybeSingle();
+    if (data) {
+      newLoc = {
+        ...data,
+        area_name: data.area_name || areaName,
+      };
+    }
+  }
+  const next = [...current, newLoc];
+  writeLocal(KEYS.LOCATIONS, next);
+  return next;
+}
+
+export async function removeMasterLocation(
+  id: string,
+  current: MasterLocation[]
+): Promise<MasterLocation[]> {
+  const target = current.find((l) => l.id === id);
+  addDeletedId(id);
+
+  const next = current.filter((l) => l.id !== id);
+  writeLocal(KEYS.LOCATIONS, next);
+
+  const supabase = createClient();
+  if (supabase) {
+    if (isValidUuid(id)) {
+      await supabase.from("master_locations").delete().eq("id", id);
+    } else if (target?.name) {
+      await supabase
+        .from("master_locations")
+        .delete()
+        .eq("name", target.name)
+        .eq("area_name", target.area_name);
     }
   }
   return next;

@@ -26,6 +26,14 @@ CREATE TABLE IF NOT EXISTS master_areas (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS master_locations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    area_id UUID REFERENCES master_areas(id) ON DELETE CASCADE,
+    area_name VARCHAR(100),
+    name VARCHAR(150) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 CREATE TABLE IF NOT EXISTS master_categories (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(100) NOT NULL UNIQUE,
@@ -63,6 +71,8 @@ CREATE TABLE IF NOT EXISTS cases (
     category_id UUID REFERENCES master_categories(id) ON DELETE SET NULL,
     case_title TEXT NOT NULL,
     area_id UUID REFERENCES master_areas(id) ON DELETE SET NULL,
+    location_id UUID REFERENCES master_locations(id) ON DELETE SET NULL,
+    location_name VARCHAR(150),
     priority priority_level NOT NULL DEFAULT 'Medium',
     pic_id UUID REFERENCES master_pics(id) ON DELETE SET NULL,
     target_date DATE NOT NULL,
@@ -74,7 +84,11 @@ CREATE TABLE IF NOT EXISTS cases (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- 6. CASE ATTACHMENTS TABLE (Cloudflare R2 Storage Metadata)
+-- Pastikan kolom location_id & location_name ada jika tabel cases sudah dibuat sebelumnya
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES master_locations(id) ON DELETE SET NULL;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS location_name VARCHAR(150);
+
+-- 6. CASE ATTACHMENTS TABLE (Supabase Storage / Base64 Metadata)
 CREATE TABLE IF NOT EXISTS case_attachments (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     case_id UUID NOT NULL REFERENCES cases(id) ON DELETE CASCADE,
@@ -129,17 +143,19 @@ CREATE TRIGGER on_auth_user_created
 AFTER INSERT ON auth.users
 FOR EACH ROW EXECUTE PROCEDURE handle_new_user();
 
--- 7. PERFORMANCE INDEXES
+-- 8. PERFORMANCE INDEXES
 CREATE INDEX IF NOT EXISTS idx_cases_status ON cases(status);
 CREATE INDEX IF NOT EXISTS idx_cases_area ON cases(area_id);
+CREATE INDEX IF NOT EXISTS idx_cases_location ON cases(location_id);
 CREATE INDEX IF NOT EXISTS idx_cases_category ON cases(category_id);
 CREATE INDEX IF NOT EXISTS idx_cases_date_reported ON cases(date_reported);
 CREATE INDEX IF NOT EXISTS idx_cases_target_date ON cases(target_date);
 CREATE INDEX IF NOT EXISTS idx_case_attachments_case ON case_attachments(case_id);
 
--- 9. ROW LEVEL SECURITY (RLS) POLICIES
+-- 9. ROW LEVEL SECURITY (RLS) POLICIES & STORAGE BUCKET
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE master_areas ENABLE ROW LEVEL SECURITY;
+ALTER TABLE master_locations ENABLE ROW LEVEL SECURITY;
 ALTER TABLE master_categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE master_pics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE cases ENABLE ROW LEVEL SECURITY;
@@ -155,18 +171,40 @@ RETURNS app_role AS $$
 $$ LANGUAGE sql SECURITY DEFINER;
 
 -- Policies: PROFILES
+DROP POLICY IF EXISTS "Allow public access profiles" ON profiles;
 CREATE POLICY "Allow public access profiles" ON profiles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Policies: MASTER TABLES
+DROP POLICY IF EXISTS "Allow public access master_areas" ON master_areas;
 CREATE POLICY "Allow public access master_areas" ON master_areas FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public access master_locations" ON master_locations;
+CREATE POLICY "Allow public access master_locations" ON master_locations FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public access master_categories" ON master_categories;
 CREATE POLICY "Allow public access master_categories" ON master_categories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public access master_pics" ON master_pics;
 CREATE POLICY "Allow public access master_pics" ON master_pics FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Policies: CASES
+DROP POLICY IF EXISTS "Allow public access cases" ON cases;
 CREATE POLICY "Allow public access cases" ON cases FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Policies: CASE ATTACHMENTS
+DROP POLICY IF EXISTS "Allow public access case_attachments" ON case_attachments;
 CREATE POLICY "Allow public access case_attachments" ON case_attachments FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+
+-- SUPABASE STORAGE BUCKET UNTUK FOTO BUKTI KASUS (case-photos)
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('case-photos', 'case-photos', true)
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+DROP POLICY IF EXISTS "Allow public upload case-photos" ON storage.objects;
+CREATE POLICY "Allow public upload case-photos"
+ON storage.objects FOR ALL TO anon, authenticated
+USING (bucket_id = 'case-photos')
+WITH CHECK (bucket_id = 'case-photos');
 
 -- ====================================================================
 -- 10. INITIAL SEED DATA (Sesuai Dashboard Asli Project BAT)

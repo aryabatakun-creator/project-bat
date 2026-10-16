@@ -18,6 +18,7 @@ export default function CasesPage() {
   const { user } = useAuth();
   const [cases, setCases] = useState<CaseItem[]>(() => getCachedData().cases);
   const [areas, setAreas] = useState(() => getCachedData().areas);
+  const [locations, setLocations] = useState(() => getCachedData().locations);
   const [categories, setCategories] = useState(() => getCachedData().categories);
   const [pics, setPics] = useState(() => getCachedData().pics);
 
@@ -34,6 +35,7 @@ export default function CasesPage() {
   useEffect(() => {
     fetchAllAppData().then((res) => {
       setAreas(res.areas);
+      setLocations(res.locations);
       setCategories(res.categories);
       setPics(res.pics);
       setCases(res.cases);
@@ -96,6 +98,7 @@ export default function CasesPage() {
       "Category",
       "Case Title",
       "Area",
+      "Lokasi",
       "Priority",
       "PIC",
       "Target Date",
@@ -104,20 +107,28 @@ export default function CasesPage() {
       "Last Update",
       "Remarks",
     ];
-    const rows = filteredCases.map((c) => [
-      c.case_id,
-      c.date_reported,
-      c.category_name,
-      `"${c.case_title.replace(/"/g, '""')}"`,
-      c.area_name,
-      c.priority,
-      c.pic_name,
-      c.target_date,
-      c.status,
-      c.progress,
-      c.last_update,
-      `"${(c.remarks || "").replace(/"/g, '""')}"`,
-    ]);
+    const rows = filteredCases.map((c) => {
+      const rawArea = c.area_name || "";
+      const areaOnly = rawArea.includes(" - ") ? rawArea.split(" - ")[0] : rawArea;
+      const locOnly =
+        c.location_name ||
+        (rawArea.includes(" - ") ? rawArea.split(" - ").slice(1).join(" - ") : "");
+      return [
+        c.case_id,
+        c.date_reported,
+        c.category_name,
+        `"${c.case_title.replace(/"/g, '""')}"`,
+        areaOnly,
+        locOnly,
+        c.priority,
+        c.pic_name,
+        c.target_date,
+        c.status,
+        c.progress,
+        c.last_update,
+        `"${(c.remarks || "").replace(/"/g, '""')}"`,
+      ];
+    });
 
     const csvContent =
       "data:text/csv;charset=utf-8," +
@@ -234,6 +245,7 @@ export default function CasesPage() {
         onSave={handleSave}
         initialData={editingCase}
         areas={areas}
+        locations={locations}
         categories={categories}
         pics={pics}
       />

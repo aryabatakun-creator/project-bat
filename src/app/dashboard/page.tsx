@@ -5,6 +5,7 @@ import { GlobalFilterBar } from "@/components/dashboard/GlobalFilterBar";
 import { KpiCards } from "@/components/dashboard/KpiCards";
 import { VisualCharts } from "@/components/dashboard/VisualCharts";
 import { CaseSummaryTable } from "@/components/dashboard/CaseSummaryTable";
+import { ExecutivePrintReport } from "@/components/dashboard/ExecutivePrintReport";
 import { CaseDetailModal } from "@/components/cases/CaseDetailModal";
 import { CaseModal } from "@/components/cases/CaseModal";
 import { CaseItem, FilterState } from "@/lib/types";
@@ -19,6 +20,7 @@ import {
 export default function DashboardPage() {
   const [cases, setCases] = useState<CaseItem[]>(() => getCachedData().cases);
   const [areas, setAreas] = useState(() => getCachedData().areas);
+  const [locations, setLocations] = useState(() => getCachedData().locations);
   const [categories, setCategories] = useState(() => getCachedData().categories);
   const [pics, setPics] = useState(() => getCachedData().pics);
 
@@ -42,6 +44,7 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchAllAppData().then((res) => {
       setAreas(res.areas);
+      setLocations(res.locations);
       setCategories(res.categories);
       setPics(res.pics);
       setCases(res.cases);
@@ -153,74 +156,47 @@ export default function DashboardPage() {
   }, []);
 
   return (
-    <div className="space-y-4">
-      {/* Printable Executive Header */}
-      <div className="hidden print:block pb-3 mb-2 border-b-2 border-slate-900">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">
-              PROJECT BAT — LAPORAN MONITORING KASUS
-            </h1>
-            <p className="text-xs text-slate-600 font-medium">
-              Filter: {filters.area} &bull; {filters.category} &bull;{" "}
-              {filters.status}
-            </p>
-          </div>
-          <div className="text-right text-xs text-slate-500">
-            <span className="font-bold text-slate-800">Tanggal Cetak:</span>{" "}
-            {new Date().toLocaleDateString("id-ID", { dateStyle: "medium" })}
-          </div>
-        </div>
-      </div>
-
-      {/* 1. Global Filter Bar */}
-      <GlobalFilterBar
+    <div>
+      {/* Dedicated Clean Print / PDF Report (Only shown when printing/saving PDF) */}
+      <ExecutivePrintReport
+        cases={filteredCases}
         filters={filters}
-        onChange={setFilters}
-        areas={areas}
-        categories={categories}
-        lastUpdated={lastUpdateStr}
-        onReset={() => setFilters(defaultFilters)}
-        onExportPdf={handleExportPdf}
+        kpiData={kpiData}
       />
 
-      {/* 2. 8 KPI Cards */}
-      <KpiCards data={kpiData} />
-
-      {/* 3. 4 Visual Charts */}
-      <VisualCharts cases={filteredCases} />
-
-      {/* 4. Data Table Summary */}
-      <div className="space-y-2 print:page-break-before-always print:pt-3">
-        {/* Printable Section Header for Page 2 */}
-        <div className="hidden print:block pb-2 mb-2 border-b-2 border-slate-900">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-base font-black text-slate-900 tracking-tight">
-                PROJECT BAT — LAMPIRAN RINCIAN MONITORING KASUS
-              </h2>
-              <p className="text-[10px] text-slate-600 font-medium">
-                Total {filteredCases.length} Kasus Terfilter
-              </p>
-            </div>
-            <div className="text-right text-[10px] text-slate-500">
-              <span className="font-bold text-slate-800">Tanggal:</span>{" "}
-              {new Date().toLocaleDateString("id-ID", { dateStyle: "medium" })}
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center justify-between print:hidden">
-          <h2 className="text-sm font-bold text-slate-900 tracking-wide">
-            Daftar Monitoring Kasus Terkini ({filteredCases.length})
-          </h2>
-        </div>
-        <CaseSummaryTable
-          cases={filteredCases}
-          onView={handleView}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
+      {/* Interactive Screen Dashboard (Hidden during PDF print) */}
+      <div className="space-y-4 print:hidden">
+        {/* 1. Global Filter Bar */}
+        <GlobalFilterBar
+          filters={filters}
+          onChange={setFilters}
+          areas={areas}
+          categories={categories}
+          lastUpdated={lastUpdateStr}
+          onReset={() => setFilters(defaultFilters)}
+          onExportPdf={handleExportPdf}
         />
+
+        {/* 2. 8 KPI Cards */}
+        <KpiCards data={kpiData} />
+
+        {/* 3. 4 Visual Charts */}
+        <VisualCharts cases={filteredCases} />
+
+        {/* 4. Data Table Summary */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold text-slate-900 tracking-wide">
+              Daftar Monitoring Kasus Terkini ({filteredCases.length})
+            </h2>
+          </div>
+          <CaseSummaryTable
+            cases={filteredCases}
+            onView={handleView}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
+        </div>
       </div>
 
       {/* Detail Modal */}
@@ -237,6 +213,7 @@ export default function DashboardPage() {
         onSave={handleSaveEdit}
         initialData={editingCase}
         areas={areas}
+        locations={locations}
         categories={categories}
         pics={pics}
       />

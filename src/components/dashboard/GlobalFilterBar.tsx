@@ -117,10 +117,10 @@ export function GlobalFilterBar({
           </select>
         </div>
 
-        {/* 3. Area / Lokasi */}
+        {/* 3. Area */}
         <div>
           <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-            Lokasi / Area
+            Area
           </label>
           <select
             value={filters.area}

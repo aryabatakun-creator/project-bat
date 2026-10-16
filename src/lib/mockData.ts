@@ -1,4 +1,10 @@
-import { CaseItem, MasterArea, MasterCategory, MasterPic } from "./types";
+import {
+  CaseItem,
+  MasterArea,
+  MasterLocation,
+  MasterCategory,
+  MasterPic,
+} from "./types";
 
 export const initialCategories: MasterCategory[] = [
   { id: "cat-1", name: "Operasional" },
@@ -14,13 +20,21 @@ export const initialCategories: MasterCategory[] = [
 
 export const initialAreas: MasterArea[] = [
   { id: "area-1", name: "Malang" },
-  { id: "area-2", name: "Malang - KR4" },
-  { id: "area-3", name: "Malang Selatan" },
-  { id: "area-4", name: "Singosari" },
-  { id: "area-5", name: "Singosari - Artemis" },
-  { id: "area-6", name: "Jakarta (HO)" },
-  { id: "area-7", name: "Karanglo" },
-  { id: "area-8", name: "Semeru" },
+  { id: "area-2", name: "Singosari" },
+  { id: "area-3", name: "Jakarta (HO)" },
+  { id: "area-4", name: "Karanglo" },
+  { id: "area-5", name: "Semeru" },
+];
+
+export const initialLocations: MasterLocation[] = [
+  { id: "loc-1", area_id: "area-1", area_name: "Malang", name: "KR4" },
+  { id: "loc-2", area_id: "area-1", area_name: "Malang", name: "Malang Selatan" },
+  { id: "loc-3", area_id: "area-1", area_name: "Malang", name: "Pos Utama Malang" },
+  { id: "loc-4", area_id: "area-2", area_name: "Singosari", name: "Artemis" },
+  { id: "loc-5", area_id: "area-2", area_name: "Singosari", name: "Gate Utama Singosari" },
+  { id: "loc-6", area_id: "area-3", area_name: "Jakarta (HO)", name: "Head Office Lobby" },
+  { id: "loc-7", area_id: "area-4", area_name: "Karanglo", name: "Gudang Karanglo" },
+  { id: "loc-8", area_id: "area-5", area_name: "Semeru", name: "Pos Semeru" },
 ];
 
 export const initialPics: MasterPic[] = [
@@ -40,4 +54,3 @@ export const initialPics: MasterPic[] = [
 
 // Cases loaded dynamically from Supabase database
 export const initialCases: CaseItem[] = [];
-

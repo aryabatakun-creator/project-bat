@@ -18,6 +18,14 @@ export interface MasterArea {
   created_at?: string;
 }
 
+export interface MasterLocation {
+  id: string;
+  area_id?: string;
+  area_name: string;
+  name: string;
+  created_at?: string;
+}
+
 export interface MasterCategory {
   id: string;
   name: string;
@@ -51,6 +59,8 @@ export interface CaseItem {
   case_title: string;
   area_id?: string;
   area_name?: string;
+  location_id?: string;
+  location_name?: string;
   priority: PriorityLevel;
   pic_id?: string;
   pic_name?: string;

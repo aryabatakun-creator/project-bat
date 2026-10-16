@@ -82,7 +82,20 @@ export function CaseDetailModal({
             <div className="flex items-center gap-2 text-slate-700">
               <MapPin className="w-4 h-4 text-slate-400 shrink-0" />
               <span>
-                <strong>Area:</strong> {caseItem.area_name || "-"}
+                <strong>Area:</strong>{" "}
+                {caseItem.area_name?.includes(" - ")
+                  ? caseItem.area_name.split(" - ")[0]
+                  : caseItem.area_name || "-"}
+              </span>
+            </div>
+            <div className="flex items-center gap-2 text-slate-700">
+              <MapPin className="w-4 h-4 text-amber-500 shrink-0" />
+              <span>
+                <strong>Lokasi:</strong>{" "}
+                {caseItem.location_name ||
+                  (caseItem.area_name?.includes(" - ")
+                    ? caseItem.area_name.split(" - ").slice(1).join(" - ")
+                    : "-")}
               </span>
             </div>
             <div className="flex items-center gap-2 text-slate-700">
@@ -97,10 +110,10 @@ export function CaseDetailModal({
                 <strong>Lapor:</strong> {formatDateIndo(caseItem.date_reported)}
               </span>
             </div>
-            <div className="flex items-center gap-2 text-slate-700">
+            <div className="flex items-center gap-2 text-slate-700 col-span-2">
               <Clock className="w-4 h-4 text-slate-400 shrink-0" />
               <span>
-                <strong>Target:</strong> {formatDateIndo(caseItem.target_date)}
+                <strong>Target Penyelesaian:</strong> {formatDateIndo(caseItem.target_date)}
               </span>
             </div>
           </div>
