@@ -16,8 +16,10 @@ import {
   saveCaseItem,
   removeCaseItem,
 } from "@/lib/dataService";
+import { useNotifications } from "@/lib/notificationContext";
 
 export default function DashboardPage() {
+  const { addCaseNotification } = useNotifications();
   const [cases, setCases] = useState<CaseItem[]>(() => getCachedData().cases);
   const [areas, setAreas] = useState(() => getCachedData().areas);
   const [locations, setLocations] = useState(() => getCachedData().locations);
@@ -141,6 +143,10 @@ export default function DashboardPage() {
       cases
     );
     setCases(updatedCases);
+    const updated = updatedCases.find((c) => c.id === editingCase.id);
+    if (updated) {
+      addCaseNotification(updated, false);
+    }
   };
 
   const handleExportPdf = () => {
@@ -204,6 +210,7 @@ export default function DashboardPage() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         caseItem={selectedCase}
+        onEdit={handleEdit}
       />
 
       {/* Edit Modal */}

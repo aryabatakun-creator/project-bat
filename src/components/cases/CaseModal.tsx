@@ -238,10 +238,10 @@ export function CaseModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden my-8">
-        {/* Header */}
-        <div className="bg-[#1E293B] text-white px-6 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full border border-slate-200 overflow-hidden my-3 sm:my-8 flex flex-col max-h-[calc(100vh-1.5rem)] sm:max-h-[calc(100vh-4rem)]">
+        {/* Header - Sticky & Always Visible */}
+        <div className="bg-[#1E293B] text-white px-6 py-4 flex items-center justify-between shrink-0 border-b border-slate-800">
           <div>
             <h2 className="text-base font-bold">
               {initialData
@@ -255,15 +255,16 @@ export function CaseModal({
             </p>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors"
+            className="text-slate-400 hover:text-white p-1 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        {/* Form Body - Scrollable */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto flex-1">
           {/* Judul Kasus */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
@@ -515,12 +516,12 @@ export function CaseModal({
             )}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+          {/* Actions - Sticky bottom */}
+          <div className="flex items-center justify-end gap-3 pt-3 pb-1 border-t border-slate-100 sticky bottom-0 bg-white/95 backdrop-blur-xs shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+              className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
             >
               Batal
             </button>

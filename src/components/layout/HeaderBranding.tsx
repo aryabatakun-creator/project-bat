@@ -4,6 +4,7 @@ import React from "react";
 import { ShieldCheck, LogOut, User } from "lucide-react";
 import { useAuth } from "@/lib/authContext";
 import { useRouter } from "next/navigation";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 export function HeaderBranding() {
   const { user, logout } = useAuth();
@@ -36,8 +37,11 @@ export function HeaderBranding() {
           </div>
         </div>
 
-        {/* Right: Authenticated User Profile & Logout */}
-        <div className="flex items-center gap-4 z-10 w-full lg:w-auto justify-between lg:justify-end">
+        {/* Right: Notification Bell + Authenticated User Profile & Logout */}
+        <div className="flex items-center gap-3 z-10 w-full lg:w-auto justify-between lg:justify-end">
+          {/* Notification Bell */}
+          <NotificationBell />
+
           {/* User Profile Pill */}
           <div className="flex items-center gap-3 bg-slate-800/90 border border-slate-700/80 rounded-xl px-3 py-1.5 shadow-xs">
             <div className="w-7 h-7 rounded-lg bg-amber-500 text-slate-950 font-black text-xs flex items-center justify-center">

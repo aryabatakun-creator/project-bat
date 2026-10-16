@@ -7,6 +7,7 @@ import { CaseModal } from "@/components/cases/CaseModal";
 import { CaseDetailModal } from "@/components/cases/CaseDetailModal";
 import { CaseItem } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
+import { useNotifications } from "@/lib/notificationContext";
 import {
   fetchAllAppData,
   getCachedData,
@@ -16,6 +17,7 @@ import {
 
 export default function CasesPage() {
   const { user } = useAuth();
+  const { addCaseNotification } = useNotifications();
   const [cases, setCases] = useState<CaseItem[]>(() => getCachedData().cases);
   const [areas, setAreas] = useState(() => getCachedData().areas);
   const [locations, setLocations] = useState(() => getCachedData().locations);
@@ -75,6 +77,7 @@ export default function CasesPage() {
     caseData: Partial<CaseItem>,
     photoFiles: File[] = []
   ) => {
+    const isNew = !editingCase;
     const { updatedCases } = await saveCaseItem(
       caseData,
       photoFiles,
@@ -82,6 +85,12 @@ export default function CasesPage() {
       cases
     );
     setCases(updatedCases);
+    const saved = editingCase
+      ? updatedCases.find((c) => c.id === editingCase.id)
+      : updatedCases[0];
+    if (saved) {
+      addCaseNotification(saved, isNew);
+    }
   };
 
   const handleDelete = async (id: string) => {
@@ -255,6 +264,7 @@ export default function CasesPage() {
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         caseItem={selectedCase}
+        onEdit={handleOpenEdit}
       />
     </div>
   );
