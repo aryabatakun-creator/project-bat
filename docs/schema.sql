@@ -172,28 +172,101 @@ $$ LANGUAGE sql SECURITY DEFINER;
 
 -- Policies: PROFILES
 DROP POLICY IF EXISTS "Allow public access profiles" ON profiles;
-CREATE POLICY "Allow public access profiles" ON profiles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated users can read profiles" ON profiles;
+DROP POLICY IF EXISTS "Admin can manage profiles" ON profiles;
 
--- Policies: MASTER TABLES
+CREATE POLICY "Authenticated users can read profiles"
+ON profiles FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Admin can manage profiles"
+ON profiles FOR ALL TO authenticated
+USING (get_user_role() = 'admin')
+WITH CHECK (get_user_role() = 'admin');
+
+-- Policies: MASTER TABLES (Strict: Read by Authenticated, Write by Admin only)
 DROP POLICY IF EXISTS "Allow public access master_areas" ON master_areas;
-CREATE POLICY "Allow public access master_areas" ON master_areas FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated read master_areas" ON master_areas;
+DROP POLICY IF EXISTS "Admin write master_areas" ON master_areas;
+
+CREATE POLICY "Authenticated read master_areas"
+ON master_areas FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Admin write master_areas"
+ON master_areas FOR ALL TO authenticated
+USING (get_user_role() = 'admin')
+WITH CHECK (get_user_role() = 'admin');
 
 DROP POLICY IF EXISTS "Allow public access master_locations" ON master_locations;
-CREATE POLICY "Allow public access master_locations" ON master_locations FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated read master_locations" ON master_locations;
+DROP POLICY IF EXISTS "Admin write master_locations" ON master_locations;
+
+CREATE POLICY "Authenticated read master_locations"
+ON master_locations FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Admin write master_locations"
+ON master_locations FOR ALL TO authenticated
+USING (get_user_role() = 'admin')
+WITH CHECK (get_user_role() = 'admin');
 
 DROP POLICY IF EXISTS "Allow public access master_categories" ON master_categories;
-CREATE POLICY "Allow public access master_categories" ON master_categories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated read master_categories" ON master_categories;
+DROP POLICY IF EXISTS "Admin write master_categories" ON master_categories;
+
+CREATE POLICY "Authenticated read master_categories"
+ON master_categories FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Admin write master_categories"
+ON master_categories FOR ALL TO authenticated
+USING (get_user_role() = 'admin')
+WITH CHECK (get_user_role() = 'admin');
 
 DROP POLICY IF EXISTS "Allow public access master_pics" ON master_pics;
-CREATE POLICY "Allow public access master_pics" ON master_pics FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated read master_pics" ON master_pics;
+DROP POLICY IF EXISTS "Admin write master_pics" ON master_pics;
 
--- Policies: CASES
+CREATE POLICY "Authenticated read master_pics"
+ON master_pics FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Admin write master_pics"
+ON master_pics FOR ALL TO authenticated
+USING (get_user_role() = 'admin')
+WITH CHECK (get_user_role() = 'admin');
+
+-- Policies: CASES (Strict: Read by all Authenticated, Write by Supervisor & Admin, Delete by Admin only)
 DROP POLICY IF EXISTS "Allow public access cases" ON cases;
-CREATE POLICY "Allow public access cases" ON cases FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated read cases" ON cases;
+DROP POLICY IF EXISTS "Supervisor and Admin insert cases" ON cases;
+DROP POLICY IF EXISTS "Supervisor and Admin update cases" ON cases;
+DROP POLICY IF EXISTS "Admin delete cases" ON cases;
 
--- Policies: CASE ATTACHMENTS
+CREATE POLICY "Authenticated read cases"
+ON cases FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Supervisor and Admin insert cases"
+ON cases FOR INSERT TO authenticated
+WITH CHECK (get_user_role() IN ('supervisor', 'admin'));
+
+CREATE POLICY "Supervisor and Admin update cases"
+ON cases FOR UPDATE TO authenticated
+USING (get_user_role() IN ('supervisor', 'admin'))
+WITH CHECK (get_user_role() IN ('supervisor', 'admin'));
+
+CREATE POLICY "Admin delete cases"
+ON cases FOR DELETE TO authenticated
+USING (get_user_role() = 'admin');
+
+-- Policies: CASE ATTACHMENTS (Strict)
 DROP POLICY IF EXISTS "Allow public access case_attachments" ON case_attachments;
-CREATE POLICY "Allow public access case_attachments" ON case_attachments FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+DROP POLICY IF EXISTS "Authenticated read attachments" ON case_attachments;
+DROP POLICY IF EXISTS "Supervisor and Admin manage attachments" ON case_attachments;
+
+CREATE POLICY "Authenticated read attachments"
+ON case_attachments FOR SELECT TO authenticated USING (true);
+
+CREATE POLICY "Supervisor and Admin manage attachments"
+ON case_attachments FOR ALL TO authenticated
+USING (get_user_role() IN ('supervisor', 'admin'))
+WITH CHECK (get_user_role() IN ('supervisor', 'admin'));
 
 -- SUPABASE STORAGE BUCKET UNTUK FOTO BUKTI KASUS (case-photos)
 INSERT INTO storage.buckets (id, name, public)
@@ -201,10 +274,21 @@ VALUES ('case-photos', 'case-photos', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
 DROP POLICY IF EXISTS "Allow public upload case-photos" ON storage.objects;
-CREATE POLICY "Allow public upload case-photos"
-ON storage.objects FOR ALL TO anon, authenticated
-USING (bucket_id = 'case-photos')
+DROP POLICY IF EXISTS "Authenticated upload case-photos" ON storage.objects;
+DROP POLICY IF EXISTS "Authenticated delete case-photos" ON storage.objects;
+DROP POLICY IF EXISTS "Public read case-photos" ON storage.objects;
+
+CREATE POLICY "Public read case-photos"
+ON storage.objects FOR SELECT TO authenticated, anon
+USING (bucket_id = 'case-photos');
+
+CREATE POLICY "Authenticated upload case-photos"
+ON storage.objects FOR INSERT TO authenticated
 WITH CHECK (bucket_id = 'case-photos');
+
+CREATE POLICY "Authenticated delete case-photos"
+ON storage.objects FOR DELETE TO authenticated
+USING (bucket_id = 'case-photos');
 
 -- ====================================================================
 -- 10. INITIAL SEED DATA (Sesuai Dashboard Asli Project BAT)

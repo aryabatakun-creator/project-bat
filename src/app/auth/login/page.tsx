@@ -41,8 +41,9 @@ export default function LoginPage() {
 
           await login(
             data.user.email || email,
-            (profile?.role as AppRole) || "supervisor",
-            profile?.full_name || email.split("@")[0]
+            (profile?.role as AppRole) || (data.user.user_metadata?.role as AppRole) || "supervisor",
+            profile?.full_name || (data.user.user_metadata?.full_name as string) || email.split("@")[0],
+            data.user.id
           );
           router.push("/dashboard");
           return;

@@ -8,7 +8,7 @@ interface AuthContextType {
   user: UserProfile;
   setUserProfile: (profile: UserProfile) => void;
   setRole: (role: AppRole) => void;
-  login: (email: string, role?: AppRole, fullName?: string) => Promise<boolean>;
+  login: (email: string, role?: AppRole, fullName?: string, userId?: string) => Promise<boolean>;
   logout: () => Promise<void>;
   isLoading: boolean;
 }
@@ -110,11 +110,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setUserProfile(updated);
   };
 
-  const login = async (email: string, role: AppRole = "supervisor", fullName?: string) => {
+  const login = async (
+    email: string,
+    role: AppRole = "supervisor",
+    fullName?: string,
+    userId?: string
+  ) => {
     setIsLoading(true);
     try {
       const newUser: UserProfile = {
-        id: `user-${Date.now()}`,
+        id: userId || user.id || `user-${Date.now()}`,
         full_name: fullName || (email.split("@")[0].toUpperCase()),
         role,
         email,

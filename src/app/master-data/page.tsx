@@ -116,8 +116,23 @@ export default function MasterDataPage() {
 
     const supabase = createClient();
     if (supabase) {
+      try {
+        await supabase.auth.signUp({
+          email,
+          password: password || "Password123",
+          options: {
+            data: {
+              full_name: name,
+              role,
+            },
+          },
+        });
+      } catch (err) {
+        console.warn("Auth signup notice:", err);
+      }
       // Insert profile metadata
-      await supabase.from("profiles").insert({
+      await supabase.from("profiles").upsert({
+        id: newUser.id,
         full_name: name,
         role,
       });
