@@ -1,9 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { X, Upload, Image as ImageIcon, Loader2 } from "lucide-react";
-import { CaseItem, MasterArea, MasterCategory, MasterPic, PriorityLevel, CaseStatus } from "@/lib/types";
+import { X, Upload, Loader2, Trash2 } from "lucide-react";
+import {
+  CaseItem,
+  CaseAttachment,
+  MasterArea,
+  MasterCategory,
+  MasterPic,
+  PriorityLevel,
+  CaseStatus,
+} from "@/lib/types";
 import imageCompression from "browser-image-compression";
+import { fileToDataUrl } from "@/lib/dataService";
 
 interface CaseModalProps {
   isOpen: boolean;
@@ -25,6 +34,7 @@ export function CaseModal({
   pics,
 }: CaseModalProps) {
   const [title, setTitle] = useState("");
+  const [dateReported, setDateReported] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [areaId, setAreaId] = useState("");
   const [priority, setPriority] = useState<PriorityLevel>("Medium");
@@ -33,36 +43,67 @@ export function CaseModal({
   const [status, setStatus] = useState<CaseStatus>("Open");
   const [progress, setProgress] = useState(0);
   const [remarks, setRemarks] = useState("");
+
+  const [existingAttachments, setExistingAttachments] = useState<
+    CaseAttachment[]
+  >([]);
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Only reset form when modal opens or initialData changes
   useEffect(() => {
+    if (!isOpen) return;
+
     if (initialData) {
       setTitle(initialData.case_title || "");
-      setCategoryId(initialData.category_id || (categories.find(c => c.name === initialData.category_name)?.id || ""));
-      setAreaId(initialData.area_id || (areas.find(a => a.name === initialData.area_name)?.id || ""));
+      setDateReported(
+        initialData.date_reported || new Date().toISOString().split("T")[0]
+      );
+      setCategoryId(
+        initialData.category_id ||
+          categories.find((c) => c.name === initialData.category_name)?.id ||
+          categories[0]?.id ||
+          ""
+      );
+      setAreaId(
+        initialData.area_id ||
+          areas.find((a) => a.name === initialData.area_name)?.id ||
+          areas[0]?.id ||
+          ""
+      );
       setPriority(initialData.priority || "Medium");
-      setPicId(initialData.pic_id || (pics.find(p => p.name === initialData.pic_name)?.id || ""));
+      setPicId(
+        initialData.pic_id ||
+          pics.find((p) => p.name === initialData.pic_name)?.id ||
+          pics[0]?.id ||
+          ""
+      );
       setTargetDate(initialData.target_date || "");
       setStatus(initialData.status || "Open");
       setProgress(initialData.progress || 0);
       setRemarks(initialData.remarks || "");
+      setExistingAttachments(initialData.attachments || []);
     } else {
       setTitle("");
+      setDateReported(new Date().toISOString().split("T")[0]);
       setCategoryId(categories[0]?.id || "");
       setAreaId(areas[0]?.id || "");
       setPriority("Medium");
       setPicId(pics[0]?.id || "");
-      setTargetDate(new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]);
+      setTargetDate(
+        new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]
+      );
       setStatus("Open");
       setProgress(0);
       setRemarks("");
+      setExistingAttachments([]);
     }
     setPhotoFiles([]);
     setPhotoPreviews([]);
-  }, [initialData, isOpen, areas, categories, pics]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialData, isOpen]);
 
   if (!isOpen) return null;
 
@@ -74,58 +115,78 @@ export function CaseModal({
 
     try {
       const options = {
-        maxSizeMB: 0.3,
+        maxSizeMB: 0.25,
         maxWidthOrHeight: 1280,
-        useWebWorker: true,
+        useWebWorker: false,
         fileType: "image/webp",
       };
 
-      const compressedFiles: File[] = [];
+      const processedFiles: File[] = [];
       const previews: string[] = [];
 
       for (const file of files) {
-        // Compress in browser
-        const compressedBlob = await imageCompression(file, options);
-        const compressedFile = new File(
-          [compressedBlob],
-          file.name.replace(/\.[^/.]+$/, "") + ".webp",
-          { type: "image/webp" }
-        );
-        compressedFiles.push(compressedFile);
-        previews.push(URL.createObjectURL(compressedFile));
+        let finalFile = file;
+        try {
+          const compressedBlob = await imageCompression(file, options);
+          finalFile = new File(
+            [compressedBlob],
+            file.name.replace(/\.[^/.]+$/, "") + ".webp",
+            { type: "image/webp" }
+          );
+        } catch (compErr) {
+          console.warn("Using original image file fallback:", compErr);
+          finalFile = file;
+        }
+
+        const dataUrl = await fileToDataUrl(finalFile);
+        processedFiles.push(finalFile);
+        previews.push(dataUrl);
       }
 
-      setPhotoFiles((prev) => [...prev, ...compressedFiles]);
+      setPhotoFiles((prev) => [...prev, ...processedFiles]);
       setPhotoPreviews((prev) => [...prev, ...previews]);
     } catch (err) {
-      console.error("Compression error:", err);
+      console.error("Photo selection error:", err);
     } finally {
       setIsCompressing(false);
+      e.target.value = "";
     }
+  };
+
+  const handleRemoveNewPhoto = (index: number) => {
+    setPhotoFiles((prev) => prev.filter((_, i) => i !== index));
+    setPhotoPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleRemoveExistingAttachment = (attId: string) => {
+    setExistingAttachments((prev) => prev.filter((a) => a.id !== attId));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      const selectedCat = categories.find((c) => c.id === categoryId);
-      const selectedArea = areas.find((a) => a.id === areaId);
-      const selectedPic = pics.find((p) => p.id === picId);
+      const selectedCat =
+        categories.find((c) => c.id === categoryId) || categories[0];
+      const selectedArea = areas.find((a) => a.id === areaId) || areas[0];
+      const selectedPic = pics.find((p) => p.id === picId) || pics[0];
 
       await onSave(
         {
           case_title: title,
-          category_id: categoryId,
+          date_reported: dateReported,
+          category_id: selectedCat?.id || categoryId,
           category_name: selectedCat?.name || "",
-          area_id: areaId,
+          area_id: selectedArea?.id || areaId,
           area_name: selectedArea?.name || "",
           priority,
-          pic_id: picId,
+          pic_id: selectedPic?.id || picId,
           pic_name: selectedPic?.name || "",
           target_date: targetDate,
           status,
           progress,
           remarks,
+          attachments: existingAttachments,
         },
         photoFiles
       );
@@ -142,10 +203,14 @@ export function CaseModal({
         <div className="bg-[#1E293B] text-white px-6 py-4 flex items-center justify-between">
           <div>
             <h2 className="text-base font-bold">
-              {initialData ? `Edit Kasus: ${initialData.case_id}` : "Input Kasus Baru"}
+              {initialData
+                ? `Edit Kasus: ${initialData.case_id}`
+                : "Input Kasus Baru"}
             </h2>
             <p className="text-xs text-slate-400">
-              {initialData ? "Perbarui status, progress & tindak lanjut" : "Pencatatan masalah operasional baru"}
+              {initialData
+                ? "Perbarui status, progress & tindak lanjut"
+                : "Pencatatan masalah operasional baru"}
             </p>
           </div>
           <button
@@ -284,7 +349,9 @@ export function CaseModal({
               <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
                 Progress Penyelesaian:
               </label>
-              <span className="text-sm font-extrabold text-amber-600">{progress}%</span>
+              <span className="text-sm font-extrabold text-amber-600">
+                {progress}%
+              </span>
             </div>
             <input
               type="range"
@@ -314,7 +381,7 @@ export function CaseModal({
           {/* Photo Attachments */}
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Lampiran Foto Bukti
+              Lampiran Foto Bukti ({existingAttachments.length + photoPreviews.length} Foto)
             </label>
             <div className="border-2 border-dashed border-slate-300 rounded-xl p-3 bg-slate-50 text-center hover:bg-slate-100/70 transition-colors">
               <input
@@ -331,20 +398,58 @@ export function CaseModal({
               >
                 <Upload className="w-6 h-6 text-slate-400" />
                 <span className="text-xs font-semibold text-slate-700">
-                  {isCompressing ? "Mengompresi gambar..." : "Klik untuk pilih foto bukti"}
+                  {isCompressing
+                    ? "Memproses gambar..."
+                    : "Klik untuk pilih foto bukti"}
                 </span>
                 <span className="text-[10px] text-slate-400">
-                  Foto otomatis dioptimasi hemat storage sebelum upload
+                  Foto otomatis dioptimasi sebelum disimpan
                 </span>
               </label>
             </div>
 
-            {/* Photo Previews */}
-            {photoPreviews.length > 0 && (
-              <div className="flex items-center gap-2 mt-2 overflow-x-auto py-1">
+            {/* Photo Previews (Existing + Newly Added) */}
+            {(existingAttachments.length > 0 || photoPreviews.length > 0) && (
+              <div className="flex items-center gap-2.5 mt-2.5 overflow-x-auto py-1">
+                {existingAttachments.map((att) => (
+                  <div
+                    key={att.id}
+                    className="relative w-20 h-20 rounded-xl overflow-hidden border border-slate-300 shrink-0 group shadow-2xs"
+                  >
+                    <img
+                      src={att.file_url}
+                      alt={att.file_name}
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveExistingAttachment(att.id)}
+                      className="absolute top-1 right-1 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      title="Hapus foto"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
+                  </div>
+                ))}
+
                 {photoPreviews.map((src, i) => (
-                  <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-slate-300 shrink-0">
-                    <img src={src} alt="preview" className="w-full h-full object-cover" />
+                  <div
+                    key={`new-${i}`}
+                    className="relative w-20 h-20 rounded-xl overflow-hidden border-2 border-amber-400 shrink-0 group shadow-2xs"
+                  >
+                    <img
+                      src={src}
+                      alt="preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveNewPhoto(i)}
+                      className="absolute top-1 right-1 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      title="Batal pilih foto"
+                    >
+                      <Trash2 className="w-3 h-3" />
+                    </button>
                   </div>
                 ))}
               </div>
@@ -363,7 +468,7 @@ export function CaseModal({
             <button
               type="submit"
               disabled={isSaving || isCompressing}
-              className="px-5 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow-sm transition-all flex items-center gap-2"
+              className="px-5 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer"
             >
               {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
               <span>{initialData ? "Simpan Perubahan" : "Simpan Kasus"}</span>

@@ -5,7 +5,7 @@ import { AppLayoutShell } from "@/components/layout/AppLayoutShell";
 
 export const metadata: Metadata = {
   title: "Project BAT - Case Monitoring & Follow-Up Tracker",
-  description: "Operational Case Monitoring System for Nawakara & Project BAT",
+  description: "Operational Case Monitoring System for Project BAT",
 };
 
 export default function RootLayout({

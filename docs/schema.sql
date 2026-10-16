@@ -155,53 +155,18 @@ RETURNS app_role AS $$
 $$ LANGUAGE sql SECURITY DEFINER;
 
 -- Policies: PROFILES
-CREATE POLICY "Allow authenticated read profiles" ON profiles FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow user update self profile" ON profiles FOR UPDATE TO authenticated USING (auth.uid() = id);
+CREATE POLICY "Allow public access profiles" ON profiles FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Policies: MASTER TABLES
--- Semua user terautentikasi & anon bisa membaca master data (untuk dropdown & dashboard)
-CREATE POLICY "Allow authenticated read master_areas" ON master_areas FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow anon read master_areas" ON master_areas FOR SELECT TO anon USING (true);
-CREATE POLICY "Allow authenticated read master_categories" ON master_categories FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow anon read master_categories" ON master_categories FOR SELECT TO anon USING (true);
-CREATE POLICY "Allow authenticated read master_pics" ON master_pics FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow anon read master_pics" ON master_pics FOR SELECT TO anon USING (true);
-
--- Hanya ADMIN yang boleh mutasi (Insert, Update, Delete) Master Tables
-CREATE POLICY "Allow admin manage master_areas" ON master_areas FOR ALL TO authenticated 
-    USING (get_user_role() = 'admin');
-
-CREATE POLICY "Allow admin manage master_categories" ON master_categories FOR ALL TO authenticated 
-    USING (get_user_role() = 'admin');
-
-CREATE POLICY "Allow admin manage master_pics" ON master_pics FOR ALL TO authenticated 
-    USING (get_user_role() = 'admin');
+CREATE POLICY "Allow public access master_areas" ON master_areas FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public access master_categories" ON master_categories FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
+CREATE POLICY "Allow public access master_pics" ON master_pics FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- Policies: CASES
--- Semua user (Admin, Management, Supervisor, dan Anon) bisa membaca seluruh kasus
-CREATE POLICY "Allow authenticated read cases" ON cases FOR SELECT TO authenticated USING (true);
-CREATE POLICY "Allow anon read cases" ON cases FOR SELECT TO anon USING (true);
+CREATE POLICY "Allow public access cases" ON cases FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
--- Supervisor & Admin boleh input kasus baru
-CREATE POLICY "Allow supervisor & admin insert cases" ON cases FOR INSERT TO authenticated 
-    WITH CHECK (get_user_role() IN ('admin', 'supervisor'));
-
--- Supervisor & Admin boleh update status, progress, remarks
-CREATE POLICY "Allow supervisor & admin update cases" ON cases FOR UPDATE TO authenticated 
-    USING (get_user_role() IN ('admin', 'supervisor'));
-
--- Hanya ADMIN yang boleh menghapus kasus
-CREATE POLICY "Allow admin delete cases" ON cases FOR DELETE TO authenticated 
-    USING (get_user_role() = 'admin');
-
--- Policies: CASE ATTACHMENTS (Cloudflare R2 File Metadata)
-CREATE POLICY "Allow authenticated read case_attachments" ON case_attachments FOR SELECT TO authenticated USING (true);
-
-CREATE POLICY "Allow supervisor & admin insert case_attachments" ON case_attachments FOR INSERT TO authenticated 
-    WITH CHECK (get_user_role() IN ('admin', 'supervisor'));
-
-CREATE POLICY "Allow supervisor & admin delete case_attachments" ON case_attachments FOR DELETE TO authenticated 
-    USING (get_user_role() IN ('admin', 'supervisor'));
+-- Policies: CASE ATTACHMENTS
+CREATE POLICY "Allow public access case_attachments" ON case_attachments FOR ALL TO anon, authenticated USING (true) WITH CHECK (true);
 
 -- ====================================================================
 -- 10. INITIAL SEED DATA (Sesuai Dashboard Asli Project BAT)

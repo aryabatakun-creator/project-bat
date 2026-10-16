@@ -5,22 +5,21 @@ import { Plus, Search, Filter, Download } from "lucide-react";
 import { CaseSummaryTable } from "@/components/dashboard/CaseSummaryTable";
 import { CaseModal } from "@/components/cases/CaseModal";
 import { CaseDetailModal } from "@/components/cases/CaseDetailModal";
-import { 
-  initialCases, 
-  initialAreas, 
-  initialCategories, 
-  initialPics 
-} from "@/lib/mockData";
 import { CaseItem } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
-import { createClient } from "@/lib/supabase/client";
+import {
+  fetchAllAppData,
+  getCachedData,
+  saveCaseItem,
+  removeCaseItem,
+} from "@/lib/dataService";
 
 export default function CasesPage() {
   const { user } = useAuth();
-  const [cases, setCases] = useState<CaseItem[]>(initialCases);
-  const [areas, setAreas] = useState(initialAreas);
-  const [categories, setCategories] = useState(initialCategories);
-  const [pics, setPics] = useState(initialPics);
+  const [cases, setCases] = useState<CaseItem[]>(() => getCachedData().cases);
+  const [areas, setAreas] = useState(() => getCachedData().areas);
+  const [categories, setCategories] = useState(() => getCachedData().categories);
+  const [pics, setPics] = useState(() => getCachedData().pics);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("Semua");
@@ -31,35 +30,13 @@ export default function CasesPage() {
   const [selectedCase, setSelectedCase] = useState<CaseItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Load from Supabase if connected
+  // Load from Supabase & local persistence
   useEffect(() => {
-    const supabase = createClient();
-    if (!supabase) return;
-
-    Promise.all([
-      supabase.from("master_areas").select("*"),
-      supabase.from("master_categories").select("*"),
-      supabase.from("master_pics").select("*"),
-      supabase.from("cases").select(`
-        *,
-        master_categories(name),
-        master_areas(name),
-        master_pics(name)
-      `).order("date_reported", { ascending: false }),
-    ]).then(([resAreas, resCats, resPics, resCases]) => {
-      if (resAreas.data && resAreas.data.length > 0) setAreas(resAreas.data);
-      if (resCats.data && resCats.data.length > 0) setCategories(resCats.data);
-      if (resPics.data && resPics.data.length > 0) setPics(resPics.data);
-
-      if (resCases.data) {
-        const formatted: CaseItem[] = resCases.data.map((c: any) => ({
-          ...c,
-          category_name: c.master_categories?.name || c.category_name,
-          area_name: c.master_areas?.name || c.area_name,
-          pic_name: c.master_pics?.name || c.pic_name,
-        }));
-        setCases(formatted);
-      }
+    fetchAllAppData().then((res) => {
+      setAreas(res.areas);
+      setCategories(res.categories);
+      setPics(res.pics);
+      setCases(res.cases);
     });
   }, []);
 
@@ -92,103 +69,23 @@ export default function CasesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSave = async (caseData: Partial<CaseItem>) => {
-    if (editingCase) {
-      // Update
-      const updated = {
-        ...editingCase,
-        ...caseData,
-        last_update: new Date().toISOString().split("T")[0],
-      };
-      setCases((prev) => prev.map((c) => (c.id === editingCase.id ? updated : c)));
-
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from("cases").update({
-          case_title: updated.case_title,
-          status: updated.status,
-          progress: updated.progress,
-          remarks: updated.remarks,
-          priority: updated.priority,
-          target_date: updated.target_date,
-          category_id: caseData.category_id || null,
-          area_id: caseData.area_id || null,
-          pic_id: caseData.pic_id || null,
-        }).eq("id", editingCase.id);
-      }
-    } else {
-      // Create new
-      const reportDate = caseData.date_reported || new Date().toISOString().split("T")[0];
-      const caseYear = new Date(reportDate).getFullYear();
-      const existingYearCases = cases.filter((c) => c.case_id?.startsWith(`BAT-${caseYear}-`));
-      const nextNum = existingYearCases.length + 1;
-      const newCaseId = `BAT-${caseYear}-${String(nextNum).padStart(3, "0")}`;
-
-      const newCase: CaseItem = {
-        id: `case-${Date.now()}`,
-        case_id: newCaseId,
-        date_reported: reportDate,
-        case_title: caseData.case_title || "Kasus Baru",
-        category_id: caseData.category_id,
-        category_name: caseData.category_name || categories[0]?.name || "Operasional",
-        area_id: caseData.area_id,
-        area_name: caseData.area_name || areas[0]?.name || "Malang",
-        priority: caseData.priority || "Medium",
-        pic_id: caseData.pic_id,
-        pic_name: caseData.pic_name || pics[0]?.name || "PIC",
-        target_date: caseData.target_date || new Date().toISOString().split("T")[0],
-        status: caseData.status || "Open",
-        progress: caseData.progress || 0,
-        last_update: new Date().toISOString().split("T")[0],
-        remarks: caseData.remarks || "",
-      };
-
-      setCases((prev) => [newCase, ...prev]);
-
-      const supabase = createClient();
-      if (supabase) {
-        const { data: inserted } = await supabase.from("cases").insert({
-          case_title: newCase.case_title,
-          category_id: caseData.category_id || null,
-          area_id: caseData.area_id || null,
-          pic_id: caseData.pic_id || null,
-          priority: newCase.priority,
-          status: newCase.status,
-          progress: newCase.progress,
-          target_date: newCase.target_date,
-          remarks: newCase.remarks,
-        }).select(`
-          *,
-          master_categories(name),
-          master_areas(name),
-          master_pics(name)
-        `).single();
-
-        if (inserted) {
-          setCases((prev) =>
-            prev.map((c) =>
-              c.id === newCase.id
-                ? {
-                    ...inserted,
-                    category_name: inserted.master_categories?.name || c.category_name,
-                    area_name: inserted.master_areas?.name || c.area_name,
-                    pic_name: inserted.master_pics?.name || c.pic_name,
-                  }
-                : c
-            )
-          );
-        }
-      }
-    }
+  const handleSave = async (
+    caseData: Partial<CaseItem>,
+    photoFiles: File[] = []
+  ) => {
+    const { updatedCases } = await saveCaseItem(
+      caseData,
+      photoFiles,
+      editingCase,
+      cases
+    );
+    setCases(updatedCases);
   };
 
-  const handleDelete = (id: string) => {
+  const handleDelete = async (id: string) => {
     if (confirm("Hapus kasus ini dari database?")) {
-      setCases((prev) => prev.filter((c) => c.id !== id));
-      const supabase = createClient();
-      if (supabase) {
-        supabase.from("cases").delete().eq("id", id).then();
-      }
+      const updatedCases = await removeCaseItem(id, cases);
+      setCases(updatedCases);
     }
   };
 

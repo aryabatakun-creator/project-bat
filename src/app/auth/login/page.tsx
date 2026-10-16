@@ -84,10 +84,10 @@ export default function LoginPage() {
             </div>
             <div className="text-left">
               <span className="text-xs font-black tracking-widest text-white block">
-                NAWAKARA
+                PROJECT BAT
               </span>
               <span className="text-[9px] text-slate-400 font-semibold tracking-wider block">
-                PERKASA NUSANTARA
+                CASE MONITORING SYSTEM
               </span>
             </div>
           </div>
@@ -178,7 +178,7 @@ export default function LoginPage() {
 
         {/* Footer info */}
         <p className="text-center text-[10px] text-slate-400 mt-6">
-          &copy; {new Date().getFullYear()} Nawakara Perkasa Nusantara &amp; Project BAT. Hak cipta dilindungi.
+          &copy; {new Date().getFullYear()} Project BAT. Hak cipta dilindungi.
         </p>
       </div>
     </div>

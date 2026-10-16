@@ -17,20 +17,10 @@ export function HeaderBranding() {
   return (
     <header className="relative w-full bg-slate-900 text-white overflow-hidden shadow-md border-b border-slate-800 print:bg-slate-900 print:text-white">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-3.5 gap-4">
-        {/* Left: Nawakara & Project Title */}
-        <div className="flex items-center gap-4 z-10">
-          <div className="flex items-center gap-2.5 pr-4 border-r border-slate-700/80">
-            <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400">
-              <ShieldCheck className="w-5 h-5 text-amber-400" />
-            </div>
-            <div className="leading-tight">
-              <span className="text-xs font-black tracking-widest text-white uppercase block">
-                NAWAKARA
-              </span>
-              <span className="text-[10px] text-slate-400 font-semibold tracking-wider block">
-                PERKASA NUSANTARA
-              </span>
-            </div>
+        {/* Left: Project Title */}
+        <div className="flex items-center gap-3.5 z-10">
+          <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+            <ShieldCheck className="w-5 h-5 text-amber-400" />
           </div>
 
           <div>

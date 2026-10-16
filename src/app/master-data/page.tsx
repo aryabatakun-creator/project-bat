@@ -3,107 +3,76 @@
 import React, { useState, useEffect } from "react";
 import { ShieldAlert, Database } from "lucide-react";
 import { MasterTabs } from "@/components/master/MasterTabs";
-import { 
-  initialAreas, 
-  initialCategories, 
-  initialPics 
-} from "@/lib/mockData";
 import { MasterArea, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
 import { getStoredUsers, saveStoredUsers } from "@/lib/userStore";
+import {
+  fetchAllAppData,
+  getCachedData,
+  createMasterArea,
+  removeMasterArea,
+  createMasterCategory,
+  removeMasterCategory,
+  createMasterPic,
+  removeMasterPic,
+} from "@/lib/dataService";
 
 export default function MasterDataPage() {
   const { user } = useAuth();
-  const [areas, setAreas] = useState<MasterArea[]>(initialAreas);
-  const [categories, setCategories] = useState<MasterCategory[]>(initialCategories);
-  const [pics, setPics] = useState<MasterPic[]>(initialPics);
+  const [areas, setAreas] = useState<MasterArea[]>(() => getCachedData().areas);
+  const [categories, setCategories] = useState<MasterCategory[]>(
+    () => getCachedData().categories
+  );
+  const [pics, setPics] = useState<MasterPic[]>(() => getCachedData().pics);
   const [users, setUsers] = useState<UserProfile[]>(() => getStoredUsers());
 
-  // Load from Supabase if available
+  // Load from Supabase & local persistence
   useEffect(() => {
-    const supabase = createClient();
-    if (!supabase) return;
-
-    Promise.all([
-      supabase.from("master_areas").select("*"),
-      supabase.from("master_categories").select("*"),
-      supabase.from("master_pics").select("*"),
-      supabase.from("profiles").select("*"),
-    ]).then(([resAreas, resCats, resPics, resUsers]) => {
-      if (resAreas.data && resAreas.data.length > 0) setAreas(resAreas.data);
-      if (resCats.data && resCats.data.length > 0) setCategories(resCats.data);
-      if (resPics.data && resPics.data.length > 0) setPics(resPics.data);
-      if (resUsers.data && resUsers.data.length > 0) {
-        setUsers(
-          resUsers.data.map((u: any) => ({
-            id: u.id,
-            full_name: u.full_name || "User",
-            role: u.role || "supervisor",
-            email: u.email || `${(u.full_name || "user").toLowerCase().replace(/\s+/g, ".")}@bat-tracker.com`,
-          }))
-        );
-      }
+    fetchAllAppData().then((res) => {
+      setAreas(res.areas);
+      setCategories(res.categories);
+      setPics(res.pics);
     });
+    setUsers(getStoredUsers());
   }, []);
 
   // Handlers for Area
   const handleAddArea = async (name: string) => {
-    const newArea: MasterArea = { id: `area-${Date.now()}`, name };
-    setAreas((prev) => [...prev, newArea]);
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.from("master_areas").insert({ name });
-    }
+    const next = await createMasterArea(name, areas);
+    setAreas(next);
   };
 
   const handleDeleteArea = async (id: string) => {
     if (confirm("Hapus area ini dari master data?")) {
-      setAreas((prev) => prev.filter((a) => a.id !== id));
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from("master_areas").delete().eq("id", id);
-      }
+      const next = await removeMasterArea(id, areas);
+      setAreas(next);
     }
   };
 
   // Handlers for Category
   const handleAddCategory = async (name: string) => {
-    const newCat: MasterCategory = { id: `cat-${Date.now()}`, name };
-    setCategories((prev) => [...prev, newCat]);
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.from("master_categories").insert({ name });
-    }
+    const next = await createMasterCategory(name, categories);
+    setCategories(next);
   };
 
   const handleDeleteCategory = async (id: string) => {
     if (confirm("Hapus kategori ini dari master data?")) {
-      setCategories((prev) => prev.filter((c) => c.id !== id));
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from("master_categories").delete().eq("id", id);
-      }
+      const next = await removeMasterCategory(id, categories);
+      setCategories(next);
     }
   };
 
   // Handlers for PIC
   const handleAddPic = async (name: string, role: string, email: string) => {
-    const newPic: MasterPic = { id: `pic-${Date.now()}`, name, role, email };
-    setPics((prev) => [...prev, newPic]);
-    const supabase = createClient();
-    if (supabase) {
-      await supabase.from("master_pics").insert({ name, role, email });
-    }
+    const next = await createMasterPic(name, role, email, pics);
+    setPics(next);
   };
 
   const handleDeletePic = async (id: string) => {
     if (confirm("Hapus PIC ini dari master data?")) {
-      setPics((prev) => prev.filter((p) => p.id !== id));
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from("master_pics").delete().eq("id", id);
-      }
+      const next = await removeMasterPic(id, pics);
+      setPics(next);
     }
   };
 
