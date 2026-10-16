@@ -36,18 +36,25 @@ export function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Close when clicking outside
+  // Close when clicking outside or pressing Escape
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
         setIsOpen(false);
       }
     }
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setIsOpen(false);
+      }
+    }
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("keydown", handleKeyDown);
     }
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, [isOpen]);
 
@@ -63,7 +70,11 @@ export function NotificationBell() {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2 rounded-xl bg-slate-800/90 hover:bg-slate-700/90 border border-slate-700/80 text-slate-300 hover:text-white transition-all shadow-xs cursor-pointer focus:outline-none"
+        className={`relative p-2 rounded-xl border transition-all shadow-xs cursor-pointer focus:outline-none ${
+          isOpen
+            ? "bg-amber-500/20 border-amber-500/50 text-amber-300"
+            : "bg-slate-800/90 hover:bg-slate-700/90 border-slate-700/80 text-slate-300 hover:text-white"
+        }`}
         title="Pemberitahuan Kasus Baru"
       >
         <Bell className="w-4 h-4" />
@@ -76,9 +87,9 @@ export function NotificationBell() {
 
       {/* Floating Notification Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 text-slate-900 animate-in fade-in zoom-in-95 duration-100">
+        <div className="fixed inset-x-3 top-20 sm:top-auto sm:inset-x-auto sm:right-0 sm:mt-2.5 sm:w-96 sm:absolute bg-white rounded-2xl shadow-2xl border border-slate-200 overflow-hidden z-50 text-slate-900 animate-in fade-in zoom-in-95 duration-100 max-h-[calc(100vh-6rem)] sm:max-h-[32rem] flex flex-col">
           {/* Header */}
-          <div className="bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between border-b border-slate-800">
+          <div className="bg-[#1E293B] text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 shrink-0">
             <div className="flex items-center gap-2">
               <Bell className="w-4 h-4 text-amber-400" />
               <span className="text-xs font-black tracking-wide">
@@ -117,7 +128,7 @@ export function NotificationBell() {
           </div>
 
           {/* List Content */}
-          <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
+          <div className="overflow-y-auto flex-1 divide-y divide-slate-100 max-h-80 sm:max-h-96">
             {notifications.length === 0 ? (
               <div className="p-8 text-center space-y-2">
                 <div className="w-10 h-10 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto">

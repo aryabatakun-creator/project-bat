@@ -100,7 +100,7 @@ export function AppLayoutShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
 
         {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 overflow-hidden print:overflow-visible print:block">
+        <div className="flex-1 flex flex-col min-w-0 relative print:overflow-visible print:block">
           <HeaderBranding />
           <main className="flex-1 p-4 md:p-6 overflow-y-auto print:p-0 print:overflow-visible print:block">
             {children}

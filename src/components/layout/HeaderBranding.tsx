@@ -16,7 +16,7 @@ export function HeaderBranding() {
   };
 
   return (
-    <header className="relative w-full bg-slate-900 text-white overflow-hidden shadow-md border-b border-slate-800 print:bg-slate-900 print:text-white">
+    <header className="relative z-30 w-full bg-slate-900 text-white shadow-md border-b border-slate-800 print:bg-slate-900 print:text-white">
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-3.5 gap-4">
         {/* Left: Project Title */}
         <div className="flex items-center gap-3.5 z-10">
@@ -38,7 +38,7 @@ export function HeaderBranding() {
         </div>
 
         {/* Right: Notification Bell + Authenticated User Profile & Logout */}
-        <div className="flex items-center gap-3 z-10 w-full lg:w-auto justify-between lg:justify-end">
+        <div className="flex items-center gap-3 z-10 w-full lg:w-auto justify-end">
           {/* Notification Bell */}
           <NotificationBell />
 
