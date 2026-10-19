@@ -351,6 +351,7 @@ async function uploadPhotoToStorage(
       const { error: uploadErr } = await supabase.storage
         .from(STORAGE_BUCKET)
         .upload(filePath, file, {
+          cacheControl: "31536000, public, immutable",
           contentType: file.type || "image/webp",
           upsert: true,
         });

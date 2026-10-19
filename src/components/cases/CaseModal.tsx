@@ -152,7 +152,7 @@ export function CaseModal({
 
     try {
       const options = {
-        maxSizeMB: 0.25,
+        maxSizeMB: 0.2, // Target maksimal 200 KB
         maxWidthOrHeight: 1280,
         useWebWorker: false,
         fileType: "image/webp",

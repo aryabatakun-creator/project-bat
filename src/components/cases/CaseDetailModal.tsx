@@ -166,8 +166,15 @@ export function CaseDetailModal({
                     <img
                       src={att.file_url}
                       alt={att.file_name}
+                      loading="lazy"
+                      decoding="async"
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                     />
+                    {att.file_size_kb ? (
+                      <span className="absolute bottom-1 right-1 bg-slate-900/75 text-white text-[9px] font-medium px-1.5 py-0.5 rounded backdrop-blur-xs">
+                        {att.file_size_kb} KB
+                      </span>
+                    ) : null}
                   </button>
                 ))}
               </div>

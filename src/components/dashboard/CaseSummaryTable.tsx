@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { CaseItem } from "@/lib/types";
 import { 
   formatDateIndo, 
@@ -9,7 +9,7 @@ import {
   getCategoryBadgeStyle,
   getProgressBarColor
 } from "@/lib/utils";
-import { Eye, Edit3, Trash2 } from "lucide-react";
+import { Eye, Edit3, Trash2, Paperclip, ChevronLeft, ChevronRight } from "lucide-react";
 import { useAuth } from "@/lib/authContext";
 
 interface TableProps {
@@ -18,6 +18,7 @@ interface TableProps {
   onEdit?: (item: CaseItem) => void;
   onDelete?: (id: string) => void;
   showActions?: boolean;
+  defaultPageSize?: number;
 }
 
 const PRIORITY_STYLE_MAP: Record<string, { bg: string; text: string; border: string }> = {
@@ -41,8 +42,37 @@ export function CaseSummaryTable({
   onEdit,
   onDelete,
   showActions = true,
+  defaultPageSize = 15,
 }: TableProps) {
   const { user } = useAuth();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number | "all">(defaultPageSize);
+
+  const totalItems = cases.length;
+  const isAll = pageSize === "all";
+  const numPageSize = typeof pageSize === "number" ? pageSize : totalItems || 15;
+  const totalPages = isAll ? 1 : Math.max(1, Math.ceil(totalItems / numPageSize));
+
+  // Auto-adjust page when cases or pageSize changes
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [totalPages, currentPage]);
+
+  const displayedCases = isAll
+    ? cases
+    : cases.slice((currentPage - 1) * numPageSize, currentPage * numPageSize);
+
+  const startIndex =
+    isAll || totalItems === 0
+      ? totalItems === 0
+        ? 0
+        : 1
+      : (currentPage - 1) * numPageSize + 1;
+  const endIndex = isAll
+    ? totalItems
+    : Math.min(currentPage * numPageSize, totalItems);
 
   return (
     <div className="bg-white rounded-xl shadow-xs border border-slate-200 overflow-hidden print:border-none print:shadow-none print:rounded-none">
@@ -70,14 +100,14 @@ export function CaseSummaryTable({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {cases.length === 0 ? (
+            {displayedCases.length === 0 ? (
               <tr>
                 <td colSpan={showActions ? 15 : 14} className="py-8 text-center text-slate-400">
                   Tidak ada data kasus yang sesuai dengan filter.
                 </td>
               </tr>
             ) : (
-              cases.map((item, idx) => {
+              displayedCases.map((item, idx) => {
                 const rawArea = item.area_name || "-";
                 const displayArea = rawArea.includes(" - ") ? rawArea.split(" - ")[0] : rawArea;
                 const displayLocation =
@@ -95,10 +125,14 @@ export function CaseSummaryTable({
                   border: "#CBD5E1",
                 };
 
+                const attachmentCount = item.attachments?.length || 0;
+
                 return (
                 <tr key={item.id} className="hover:bg-slate-50 transition-colors">
                   {/* 1. No */}
-                  <td className="py-2.5 px-3 text-center text-slate-700 font-bold">{idx + 1}</td>
+                  <td className="py-2.5 px-3 text-center text-slate-700 font-bold">
+                    {isAll ? idx + 1 : (currentPage - 1) * numPageSize + idx + 1}
+                  </td>
 
                   {/* 2. Case ID */}
                   <td className="py-2.5 px-3 font-bold text-slate-800 whitespace-nowrap">
@@ -121,9 +155,20 @@ export function CaseSummaryTable({
                     </span>
                   </td>
 
-                  {/* 5. Case Title */}
+                  {/* 5. Case Title & Attachment Indicator */}
                   <td className="py-2.5 px-3 font-medium text-slate-800 print:whitespace-normal print:break-words">
-                    {item.case_title}
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <span>{item.case_title}</span>
+                      {attachmentCount > 0 && (
+                        <span
+                          title={`${attachmentCount} foto bukti terlampir (buka detail untuk melihat)`}
+                          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-slate-600 border border-slate-200 shrink-0"
+                        >
+                          <Paperclip className="w-2.5 h-2.5 text-slate-500" />
+                          <span>{attachmentCount}</span>
+                        </span>
+                      )}
+                    </div>
                   </td>
 
                   {/* 6. Area */}
@@ -203,7 +248,7 @@ export function CaseSummaryTable({
                     {item.remarks || "-"}
                   </td>
 
-                  {/* 14. Action buttons according to RBAC */}
+                  {/* 15. Action buttons according to RBAC */}
                   {showActions && (
                     <td className="py-2.5 px-3 text-center whitespace-nowrap print:hidden">
                       <div className="flex items-center justify-center gap-1">
@@ -249,6 +294,62 @@ export function CaseSummaryTable({
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Footer */}
+      {totalItems > 0 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-slate-50 border-t border-slate-200 text-xs text-slate-600 print:hidden">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span>Tampilkan</span>
+            <select
+              value={pageSize}
+              onChange={(e) => {
+                const val = e.target.value === "all" ? "all" : parseInt(e.target.value, 10);
+                setPageSize(val);
+                setCurrentPage(1);
+              }}
+              className="bg-white border border-slate-300 rounded px-2 py-1 text-xs text-slate-700 font-medium focus:ring-1 focus:ring-amber-500 focus:outline-none"
+            >
+              <option value={10}>10</option>
+              <option value={15}>15</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+              <option value="all">Semua ({totalItems})</option>
+            </select>
+            <span>baris per halaman</span>
+            <span className="text-slate-400 mx-1">|</span>
+            <span>
+              Menampilkan <strong>{startIndex}</strong> - <strong>{endIndex}</strong> dari{" "}
+              <strong>{totalItems}</strong> kasus
+            </span>
+          </div>
+
+          {!isAll && totalPages > 1 && (
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Halaman Sebelumnya"
+              >
+                <ChevronLeft className="w-3.5 h-3.5" />
+              </button>
+              <span className="px-2 font-semibold text-slate-700">
+                Hal {currentPage} dari {totalPages}
+              </span>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1.5 rounded border border-slate-200 bg-white text-slate-600 hover:bg-slate-100 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                title="Halaman Berikutnya"
+              >
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
