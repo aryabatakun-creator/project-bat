@@ -112,7 +112,7 @@ export function GlobalFilterBar({
             onChange={(e) => updateField("project", e.target.value)}
             className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
           >
-            <option value="Project BAT">Project BAT</option>
+            <option value="NPN - Project BAT">NPN - Project BAT</option>
             <option value="Semua Project">Semua Project</option>
           </select>
         </div>

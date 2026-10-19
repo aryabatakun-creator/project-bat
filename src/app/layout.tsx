@@ -4,8 +4,8 @@ import { AuthProvider } from "@/lib/authContext";
 import { AppLayoutShell } from "@/components/layout/AppLayoutShell";
 
 export const metadata: Metadata = {
-  title: "Project BAT - Case Monitoring & Follow-Up Tracker",
-  description: "Operational Case Monitoring System for Project BAT",
+  title: "NPN - Project BAT - Case Monitoring & Follow-Up Tracker",
+  description: "Operational Case Monitoring System for NPN - Project BAT (Supported by OrstedLabs)",
 };
 
 export default function RootLayout({

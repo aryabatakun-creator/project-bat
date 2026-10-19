@@ -190,7 +190,7 @@ export function ExecutivePrintReport({
           <div>
             <div className="flex items-center gap-2">
               <span className="bg-slate-900 text-amber-400 font-black text-xs px-2 py-0.5 rounded">
-                PROJECT BAT
+                NPN - PROJECT BAT
               </span>
               <h1 className="text-base font-black text-slate-900 tracking-tight uppercase">
                 Executive Case Monitoring &amp; Follow-Up Report
@@ -522,6 +522,12 @@ export function ExecutivePrintReport({
               })}
             </tbody>
           </table>
+
+          {/* Report Footer Remarks */}
+          <div className="mt-2.5 pt-2 border-t border-slate-300 flex items-center justify-between text-[7.5pt] text-slate-500 font-medium">
+            <span>Sistem Monitoring Kasus &amp; Tindak Lanjut &bull; NPN - Project BAT</span>
+            <span>Supported by <strong>OrstedLabs</strong></span>
+          </div>
         </div>
       </div>
     </div>

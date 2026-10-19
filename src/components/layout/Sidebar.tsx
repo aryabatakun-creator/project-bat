@@ -81,8 +81,8 @@ export function Sidebar() {
             </div>
             {!isCollapsed && (
               <div className="leading-tight truncate">
-                <h2 className="text-sm font-black text-white tracking-wide">
-                  BAT TRACKER
+                <h2 className="text-xs font-black text-white tracking-wide truncate">
+                  NPN - PROJECT BAT
                 </h2>
                 <span className="text-[10px] text-slate-400 font-medium tracking-wider">
                   Operational System
@@ -184,6 +184,23 @@ export function Sidebar() {
             )}
           </div>
         </div>
+
+        {/* OrstedLabs Remarks Badge / Footer */}
+        {!isCollapsed ? (
+          <div className="px-3.5 py-2.5 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
+            <span className="text-slate-400 font-medium">Supported by</span>
+            <span className="font-bold text-amber-400/90 hover:text-amber-300 transition-colors">
+              OrstedLabs
+            </span>
+          </div>
+        ) : (
+          <div
+            className="py-2 bg-slate-950 border-t border-slate-800/80 flex justify-center cursor-default"
+            title="Supported by OrstedLabs"
+          >
+            <span className="text-[9px] font-black tracking-tighter text-amber-400/80">OL</span>
+          </div>
+        )}
       </aside>
     </>
   );

@@ -85,7 +85,7 @@ export default function LoginPage() {
             </div>
             <div className="text-left">
               <span className="text-xs font-black tracking-widest text-white block">
-                PROJECT BAT
+                NPN - PROJECT BAT
               </span>
               <span className="text-[9px] text-slate-400 font-semibold tracking-wider block">
                 CASE MONITORING SYSTEM
@@ -94,7 +94,7 @@ export default function LoginPage() {
           </div>
 
           <h1 className="text-2xl font-black text-white tracking-tight">
-            PROJECT BAT PORTAL
+            NPN - PROJECT BAT PORTAL
           </h1>
           <p className="text-xs text-slate-400 mt-1">
             Operational Case Monitoring &amp; Follow-Up System
@@ -178,9 +178,12 @@ export default function LoginPage() {
         </div>
 
         {/* Footer info */}
-        <p className="text-center text-[10px] text-slate-400 mt-6">
-          &copy; {new Date().getFullYear()} Project BAT. Hak cipta dilindungi.
-        </p>
+        <div className="text-center text-[10px] text-slate-400 mt-6 space-y-1">
+          <p>&copy; {new Date().getFullYear()} NPN - Project BAT. Hak cipta dilindungi.</p>
+          <p className="text-slate-400">
+            Supported by <span className="font-semibold text-amber-400/90">OrstedLabs</span>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -26,13 +26,17 @@ export function HeaderBranding() {
 
           <div>
             <h1 className="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
-              <span>PROJECT BAT</span>
+              <span>NPN - PROJECT BAT</span>
               <span className="text-[11px] font-bold text-amber-400 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30">
                 CASE MONITORING &amp; FOLLOW-UP TRACKER
               </span>
             </h1>
-            <p className="text-[11px] text-slate-400 tracking-wide mt-0.5">
-              Monitoring, Evaluation, Escalation &amp; Corrective Action
+            <p className="text-[11px] text-slate-400 tracking-wide mt-0.5 flex items-center gap-2 flex-wrap">
+              <span>Monitoring, Evaluation, Escalation &amp; Corrective Action</span>
+              <span className="text-slate-600 hidden sm:inline">&bull;</span>
+              <span className="text-[10px] text-slate-400">
+                Supported by <span className="font-semibold text-amber-400/90">OrstedLabs</span>
+              </span>
             </p>
           </div>
         </div>
