@@ -20,8 +20,12 @@ export function HeaderBranding() {
       <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between px-6 py-3.5 gap-4">
         {/* Left: Project Title */}
         <div className="flex items-center gap-3.5 z-10">
-          <div className="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
-            <ShieldCheck className="w-5 h-5 text-amber-400" />
+          <div className="w-10 h-10 rounded-xl bg-[#0B1026] border border-slate-700/80 p-1 flex items-center justify-center shrink-0 shadow-md">
+            <img
+              src="/images/orstedlabs-mark.png"
+              alt="OrstedLabs"
+              className="w-full h-full object-contain"
+            />
           </div>
 
           <div>
@@ -81,16 +85,13 @@ export function HeaderBranding() {
             </button>
           </div>
 
-          {/* BAT Corporate Logo Mark */}
+          {/* OrstedLabs Brand Logo Mark */}
           <div className="flex items-center gap-2 pl-3 border-l border-slate-700/80">
-            <div className="text-right leading-none">
-              <span className="text-xl font-black tracking-tighter text-white block">
-                BAT
-              </span>
-              <span className="text-[9px] text-slate-400 tracking-widest uppercase font-semibold block">
-                A BETTER TOMORROW
-              </span>
-            </div>
+            <img
+              src="/images/orstedlabs-logo.png"
+              alt="OrstedLabs - Turn Ideas Into Impact"
+              className="h-9 w-auto object-contain rounded-lg shadow-xs"
+            />
           </div>
         </div>
       </div>

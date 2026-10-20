@@ -80,8 +80,12 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center gap-3 bg-slate-900/90 border border-slate-800 px-4 py-2 rounded-2xl mb-4 shadow-xl">
-            <div className="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center font-black text-slate-950 text-sm shadow">
-              BAT
+            <div className="w-9 h-9 rounded-xl bg-[#0B1026] border border-slate-700/80 p-0.5 flex items-center justify-center shadow overflow-hidden shrink-0">
+              <img
+                src="/images/orstedlabs-mark.png"
+                alt="OrstedLabs"
+                className="w-full h-full object-contain"
+              />
             </div>
             <div className="text-left">
               <span className="text-xs font-black tracking-widest text-white block">
@@ -178,11 +182,16 @@ export default function LoginPage() {
         </div>
 
         {/* Footer info */}
-        <div className="text-center text-[10px] text-slate-400 mt-6 space-y-1">
+        <div className="text-center text-[10px] text-slate-400 mt-6 space-y-2">
           <p>&copy; {new Date().getFullYear()} NPN - Project BAT. Hak cipta dilindungi.</p>
-          <p className="text-slate-400">
-            Supported by <span className="font-semibold text-amber-400/90">OrstedLabs</span>
-          </p>
+          <div className="flex items-center justify-center gap-2 text-slate-400">
+            <span>Supported by</span>
+            <img
+              src="/images/orstedlabs-logo.png"
+              alt="OrstedLabs"
+              className="h-4 w-auto object-contain inline-block"
+            />
+          </div>
         </div>
       </div>
     </div>

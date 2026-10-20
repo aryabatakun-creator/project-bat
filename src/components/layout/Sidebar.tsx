@@ -76,8 +76,12 @@ export function Sidebar() {
         {/* Brand Header */}
         <div className="px-4 py-4 border-b border-slate-800 flex items-center justify-between">
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-amber-500 flex items-center justify-center font-black text-slate-950 text-sm shadow-md shrink-0">
-              BAT
+            <div className="w-9 h-9 rounded-xl bg-[#0B1026] border border-slate-700/80 p-0.5 flex items-center justify-center shadow-md shrink-0 overflow-hidden">
+              <img
+                src="/images/orstedlabs-mark.png"
+                alt="OrstedLabs"
+                className="w-full h-full object-contain"
+              />
             </div>
             {!isCollapsed && (
               <div className="leading-tight truncate">
@@ -189,16 +193,22 @@ export function Sidebar() {
         {!isCollapsed ? (
           <div className="px-3.5 py-2.5 bg-slate-950 border-t border-slate-800/80 flex items-center justify-between text-[10px]">
             <span className="text-slate-400 font-medium">Supported by</span>
-            <span className="font-bold text-amber-400/90 hover:text-amber-300 transition-colors">
-              OrstedLabs
-            </span>
+            <img
+              src="/images/orstedlabs-logo.png"
+              alt="OrstedLabs"
+              className="h-4 w-auto object-contain"
+            />
           </div>
         ) : (
           <div
-            className="py-2 bg-slate-950 border-t border-slate-800/80 flex justify-center cursor-default"
+            className="py-2.5 bg-slate-950 border-t border-slate-800/80 flex justify-center cursor-default"
             title="Supported by OrstedLabs"
           >
-            <span className="text-[9px] font-black tracking-tighter text-amber-400/80">OL</span>
+            <img
+              src="/images/orstedlabs-mark.png"
+              alt="OrstedLabs"
+              className="w-4 h-4 object-contain rounded"
+            />
           </div>
         )}
       </aside>

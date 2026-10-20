@@ -188,7 +188,13 @@ export function ExecutivePrintReport({
         {/* Banner Header */}
         <div className="flex items-center justify-between border-b-2 border-slate-900 pb-2.5">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
+              <img
+                src="/images/orstedlabs-logo-light.png"
+                alt="OrstedLabs"
+                className="h-6 w-auto object-contain"
+              />
+              <span className="text-slate-300 font-light text-sm">|</span>
               <span className="bg-slate-900 text-amber-400 font-black text-xs px-2 py-0.5 rounded">
                 NPN - PROJECT BAT
               </span>
@@ -526,7 +532,14 @@ export function ExecutivePrintReport({
           {/* Report Footer Remarks */}
           <div className="mt-2.5 pt-2 border-t border-slate-300 flex items-center justify-between text-[7.5pt] text-slate-500 font-medium">
             <span>Sistem Monitoring Kasus &amp; Tindak Lanjut &bull; NPN - Project BAT</span>
-            <span>Supported by <strong>OrstedLabs</strong></span>
+            <div className="flex items-center gap-1.5">
+              <span>Supported by</span>
+              <img
+                src="/images/orstedlabs-logo-light.png"
+                alt="OrstedLabs"
+                className="h-3.5 w-auto object-contain inline-block"
+              />
+            </div>
           </div>
         </div>
       </div>
