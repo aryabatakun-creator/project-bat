@@ -10,9 +10,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "NPN - Project BAT - Case Monitoring & Follow-Up Tracker",
-  description: "Operational Case Monitoring System for NPN - Project BAT (Supported by OrstedLabs)",
-  applicationName: "Project BAT",
+  title: "Case Tracker by Orstedlabs - Case Monitoring & Follow-Up Tracker",
+  description: "Operational Case Monitoring System - Case Tracker by Orstedlabs",
+  applicationName: "Case Tracker by Orstedlabs",
   manifest: "/manifest.json",
   icons: {
     icon: [
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Project BAT",
+    title: "Case Tracker by Orstedlabs",
   },
 };
 
@@ -44,9 +44,11 @@ export default function RootLayout({
       <head>
         <link rel="manifest" href="/manifest.json" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+        <meta name="application-name" content="Case Tracker by Orstedlabs" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="Case Tracker by Orstedlabs" />
         <meta name="theme-color" content="#0B1026" />
       </head>
       <body className="bg-slate-100 min-h-screen text-slate-900 antialiased">

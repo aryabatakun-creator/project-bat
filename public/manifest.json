@@ -1,7 +1,7 @@
 {
-  "name": "NPN - Project BAT | OrstedLabs",
-  "short_name": "Project BAT",
-  "description": "Operational Case Monitoring & Follow-Up Tracker (Supported by OrstedLabs)",
+  "name": "Case Tracker by Orstedlabs",
+  "short_name": "Case Tracker by Orstedlabs",
+  "description": "Case Monitoring & Follow-Up Tracker by Orstedlabs",
   "start_url": "/",
   "id": "/",
   "scope": "/",
