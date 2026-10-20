@@ -59,7 +59,26 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     if (typeof window !== "undefined") {
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) return JSON.parse(raw);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed)) {
+            try {
+              const cachedCases = getCachedData().cases;
+              return parsed.map((n: AppNotification) => {
+                const matched = cachedCases.find(
+                  (c) =>
+                    (n.caseId && c.case_id === n.caseId) ||
+                    (n.caseItem?.id && c.id === n.caseItem.id) ||
+                    (n.caseItem?.case_id && c.case_id === n.caseItem.case_id)
+                );
+                return matched ? { ...n, caseItem: matched } : n;
+              });
+            } catch {
+              return parsed;
+            }
+          }
+          return parsed;
+        }
       } catch {
         // fallback
       }
@@ -120,7 +139,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       read: false,
     };
 
-    setNotifications((prev) => [newNotif, ...prev.slice(0, 49)]); // Keep up to 50
+    setNotifications((prev) => {
+      // Also update existing notifications for this caseId to point to the latest caseItem
+      const updatedPrev = prev.map((n) =>
+        n.caseId === item.case_id || (item.id && n.caseItem?.id === item.id)
+          ? { ...n, caseItem: item }
+          : n
+      );
+      return [newNotif, ...updatedPrev.slice(0, 49)];
+    });
     setLatestToast(newNotif);
 
     // Auto dismiss toast after 5s
@@ -144,7 +171,18 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const openDetail = useCallback((item: CaseItem) => {
-    setDetailCase(item);
+    try {
+      const cached = getCachedData().cases;
+      const latest =
+        cached.find(
+          (c) =>
+            (item.case_id && c.case_id === item.case_id) ||
+            (item.id && c.id === item.id)
+        ) || item;
+      setDetailCase(latest);
+    } catch {
+      setDetailCase(item);
+    }
   }, []);
 
   const closeDetail = useCallback(() => {

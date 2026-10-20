@@ -3,6 +3,7 @@
 import React from "react";
 import { Bell, X, ArrowRight } from "lucide-react";
 import { useNotifications } from "@/lib/notificationContext";
+import { getCachedData } from "@/lib/dataService";
 
 export function NotificationToast() {
   const { latestToast, dismissToast, openDetail, markAsRead } = useNotifications();
@@ -11,7 +12,19 @@ export function NotificationToast() {
 
   const handleClick = () => {
     markAsRead(latestToast.id);
-    openDetail(latestToast.caseItem);
+    try {
+      const cached = getCachedData().cases;
+      const latest =
+        cached.find(
+          (c) =>
+            (latestToast.caseId && c.case_id === latestToast.caseId) ||
+            (latestToast.caseItem?.id && c.id === latestToast.caseItem.id) ||
+            (latestToast.caseItem?.case_id && c.case_id === latestToast.caseItem.case_id)
+        ) || latestToast.caseItem;
+      openDetail(latest);
+    } catch {
+      openDetail(latestToast.caseItem);
+    }
     dismissToast();
   };
 

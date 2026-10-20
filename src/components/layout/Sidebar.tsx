@@ -7,7 +7,6 @@ import {
   LayoutDashboard, 
   ClipboardList, 
   Database, 
-  Lock,
   ChevronLeft,
   ChevronRight,
   Menu,
@@ -147,16 +146,6 @@ export function Sidebar() {
               </Link>
             );
           })}
-
-          {/* Master Data Locked Badge (Shown only if management/supervisor tries to search) */}
-          {!isCollapsed && user.role !== "admin" && (
-            <div className="pt-4 px-3">
-              <div className="p-2.5 rounded-xl bg-slate-800/40 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
-                <Lock className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                <span>Master Data khusus Admin</span>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* User Info & Role Footer */}

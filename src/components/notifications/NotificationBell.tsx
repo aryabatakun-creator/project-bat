@@ -3,6 +3,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Bell, CheckCheck, Trash2, ArrowRight, ShieldAlert, Sparkles } from "lucide-react";
 import { useNotifications, AppNotification } from "@/lib/notificationContext";
+import { getCachedData } from "@/lib/dataService";
 
 function getTimeAgo(timestamp: string): string {
   try {
@@ -61,7 +62,19 @@ export function NotificationBell() {
   const handleItemClick = (notif: AppNotification) => {
     markAsRead(notif.id);
     setIsOpen(false);
-    openDetail(notif.caseItem);
+    try {
+      const cached = getCachedData().cases;
+      const latest =
+        cached.find(
+          (c) =>
+            (notif.caseId && c.case_id === notif.caseId) ||
+            (notif.caseItem?.id && c.id === notif.caseItem.id) ||
+            (notif.caseItem?.case_id && c.case_id === notif.caseItem.case_id)
+        ) || notif.caseItem;
+      openDetail(latest);
+    } catch {
+      openDetail(notif.caseItem);
+    }
   };
 
   return (
