@@ -6,7 +6,7 @@ import { MasterTabs } from "@/components/master/MasterTabs";
 import { MasterArea, MasterLocation, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
-import { getStoredUsers, saveStoredUsers } from "@/lib/userStore";
+import { getStoredUsers, saveStoredUsers, MAX_USERS_LIMIT } from "@/lib/userStore";
 import {
   fetchAllAppData,
   getCachedData,
@@ -103,10 +103,21 @@ export default function MasterDataPage() {
 
   // Handlers for User Management
   const handleAddUser = async (name: string, email: string, role: AppRole, password?: string) => {
+    if (users.length >= MAX_USERS_LIMIT) {
+      alert(`Batas maksimal ${MAX_USERS_LIMIT} user telah tercapai. Sistem telah mengunci pembuatan user baru.`);
+      return;
+    }
+    const cleanEmail = email.trim().toLowerCase();
+    const isDuplicate = users.some((u) => (u.email || "").trim().toLowerCase() === cleanEmail);
+    if (isDuplicate) {
+      alert(`User dengan email "${email}" sudah terdaftar.`);
+      return;
+    }
+
     const newUser: UserProfile = {
       id: `usr-${Date.now()}`,
       full_name: name,
-      email,
+      email: cleanEmail,
       role,
       password: password || "Password123",
     };

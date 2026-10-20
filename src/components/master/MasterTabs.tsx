@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Plus, Trash2, MapPin, Navigation, Tag, Users, UserPlus, Shield, Key } from "lucide-react";
+import { Plus, Trash2, MapPin, Navigation, Tag, Users, UserPlus, Shield, Key, Lock } from "lucide-react";
 import { MasterArea, MasterLocation, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
+import { MAX_USERS_LIMIT } from "@/lib/userStore";
 
 interface MasterTabsProps {
   areas: MasterArea[];
@@ -91,6 +92,10 @@ export function MasterTabs({
 
   const handleAddUserSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (users.length >= MAX_USERS_LIMIT) {
+      alert(`Batas maksimal ${MAX_USERS_LIMIT} user telah tercapai. Sistem telah mengunci penambahan user baru.`);
+      return;
+    }
     if (!newUserName.trim() || !newUserEmail.trim()) return;
     const finalPassword = newUserPassword.trim() || "Password123";
     if (onAddUser) {
@@ -163,7 +168,13 @@ export function MasterTabs({
           }`}
         >
           <Shield className="w-3.5 h-3.5 text-amber-500" />
-          <span>Kelola Akun User ({users.length})</span>
+          <span>Kelola Akun User ({users.length}/{MAX_USERS_LIMIT})</span>
+          {users.length >= MAX_USERS_LIMIT && (
+            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 border border-rose-200">
+              <Lock className="w-2.5 h-2.5" />
+              <span>Penuh</span>
+            </span>
+          )}
         </button>
       </div>
 
@@ -386,47 +397,83 @@ export function MasterTabs({
       {/* Tab 4: Kelola Akun User (Admin Setup) */}
       {activeTab === "users" && (
         <div className="p-5 space-y-5">
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 text-xs text-slate-700 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4 text-amber-600 shrink-0" />
-              <span>
-                <strong>Pengaturan Hak Akses (RBAC)</strong>: Akun yang didaftarkan di sini dapat langsung masuk melalui halaman Login.
-              </span>
+          {/* Quota & Status Banner */}
+          {users.length >= MAX_USERS_LIMIT ? (
+            <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 text-xs text-rose-900 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-start gap-3">
+                <div className="p-2 bg-rose-100 rounded-lg shrink-0 mt-0.5 sm:mt-0">
+                  <Lock className="w-4 h-4 text-rose-600" />
+                </div>
+                <div>
+                  <div className="font-bold text-rose-900 text-sm flex items-center gap-2">
+                    Batas Maksimal 10 User Telah Tercapai
+                    <span className="text-[10px] uppercase font-bold bg-rose-200/80 text-rose-800 px-2 py-0.5 rounded-full border border-rose-300">
+                      Terkunci
+                    </span>
+                  </div>
+                  <p className="text-rose-700 mt-1 text-xs">
+                    Sistem dibatasi maksimal {MAX_USERS_LIMIT} akun user ({users.length}/{MAX_USERS_LIMIT}). Penambahan user baru telah dikunci. Hapus salah satu user terlebih dahulu jika ingin mendaftarkan user baru.
+                  </p>
+                </div>
+              </div>
+              <div className="self-end sm:self-center shrink-0">
+                <span className="text-xs font-black text-rose-800 bg-rose-200/70 border border-rose-300 px-3 py-1.5 rounded-xl">
+                  {users.length} / {MAX_USERS_LIMIT} User
+                </span>
+              </div>
             </div>
-            <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-2 py-0.5 rounded">
-              Admin Control
-            </span>
-          </div>
+          ) : (
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3.5 text-xs text-slate-700 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-2xs">
+              <div className="flex items-center gap-2.5">
+                <Shield className="w-4 h-4 text-amber-600 shrink-0" />
+                <span>
+                  <strong>Pengaturan Hak Akses (RBAC)</strong>: Akun yang didaftarkan dapat langsung masuk via Login. Kuota user: <strong>{users.length}/{MAX_USERS_LIMIT}</strong> (Tersisa <strong>{MAX_USERS_LIMIT - users.length}</strong> slot).
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <span className="text-[10px] font-bold uppercase text-slate-600 bg-white/80 border border-slate-200 px-2.5 py-1 rounded-lg">
+                  {users.length} / {MAX_USERS_LIMIT} Terdaftar
+                </span>
+                <span className="text-[10px] font-bold uppercase text-amber-700 bg-amber-100 px-2 py-1 rounded-lg">
+                  Admin Control
+                </span>
+              </div>
+            </div>
+          )}
 
           {/* Form Tambah Akun Baru */}
           <form onSubmit={handleAddUserSubmit} className="grid grid-cols-1 md:grid-cols-5 gap-2.5">
             <input
               type="text"
               required
-              placeholder="Nama Lengkap User..."
+              disabled={users.length >= MAX_USERS_LIMIT}
+              placeholder={users.length >= MAX_USERS_LIMIT ? "Batas maksimal user tercapai" : "Nama Lengkap User..."}
               value={newUserName}
               onChange={(e) => setNewUserName(e.target.value)}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
             <input
               type="email"
               required
-              placeholder="Email Login..."
+              disabled={users.length >= MAX_USERS_LIMIT}
+              placeholder={users.length >= MAX_USERS_LIMIT ? "Form dinonaktifkan (Lock)" : "Email Login..."}
               value={newUserEmail}
               onChange={(e) => setNewUserEmail(e.target.value)}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
             <input
               type="text"
-              placeholder="Password (Default: Password123)"
+              disabled={users.length >= MAX_USERS_LIMIT}
+              placeholder={users.length >= MAX_USERS_LIMIT ? "-" : "Password (Default: Password123)"}
               value={newUserPassword}
               onChange={(e) => setNewUserPassword(e.target.value)}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500"
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
             />
             <select
+              disabled={users.length >= MAX_USERS_LIMIT}
               value={newUserRole}
               onChange={(e) => setNewUserRole(e.target.value as AppRole)}
-              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium"
+              className="bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed"
             >
               <option value="supervisor">Field Supervisor (Input/Update)</option>
               <option value="management">Management (Read-Only KPI)</option>
@@ -434,12 +481,39 @@ export function MasterTabs({
             </select>
             <button
               type="submit"
-              className="px-4 py-2 bg-slate-900 text-amber-400 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 hover:bg-slate-800 shadow-xs transition-colors cursor-pointer"
+              disabled={users.length >= MAX_USERS_LIMIT}
+              className={`px-4 py-2 font-bold rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-xs transition-colors ${
+                users.length >= MAX_USERS_LIMIT
+                  ? "bg-slate-200 text-slate-400 cursor-not-allowed border border-slate-300"
+                  : "bg-slate-900 text-amber-400 hover:bg-slate-800 cursor-pointer"
+              }`}
+              title={users.length >= MAX_USERS_LIMIT ? "Batas maksimal 10 user telah tercapai" : "Tambah User"}
             >
-              <UserPlus className="w-3.5 h-3.5" />
-              <span>Tambah User</span>
+              {users.length >= MAX_USERS_LIMIT ? (
+                <>
+                  <Lock className="w-3.5 h-3.5 text-slate-400" />
+                  <span>Terkunci (Max 10)</span>
+                </>
+              ) : (
+                <>
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>Tambah User</span>
+                </>
+              )}
             </button>
           </form>
+
+          {/* User Account List Header */}
+          <div className="flex items-center justify-between pt-1">
+            <span className="text-xs font-bold text-slate-700">
+              Daftar Akun Pengguna ({users.length} / {MAX_USERS_LIMIT})
+            </span>
+            <span className="text-[11px] text-slate-500 font-medium">
+              {MAX_USERS_LIMIT - users.length > 0
+                ? `Tersedia ${MAX_USERS_LIMIT - users.length} slot user baru`
+                : "Kuota akun pengguna penuh (10/10)"}
+            </span>
+          </div>
 
           {/* User Account List */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">

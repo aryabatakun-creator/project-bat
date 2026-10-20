@@ -1,5 +1,7 @@
 import { UserProfile } from "./types";
 
+export const MAX_USERS_LIMIT = 10;
+
 export const DEFAULT_USERS: UserProfile[] = [
   {
     id: "usr-admin-1",
@@ -48,10 +50,15 @@ export function getStoredUsers(): UserProfile[] {
   return DEFAULT_USERS;
 }
 
+export function isUserLimitReached(usersCount: number): boolean {
+  return usersCount >= MAX_USERS_LIMIT;
+}
+
 export function saveStoredUsers(users: UserProfile[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+    const capped = users.slice(0, MAX_USERS_LIMIT);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(capped));
   } catch (err) {
     console.error("Failed to save stored users:", err);
   }
