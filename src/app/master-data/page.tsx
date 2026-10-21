@@ -40,17 +40,34 @@ export default function MasterDataPage() {
   const [pics, setPics] = useState<MasterPic[]>(() => getCachedData().pics);
   const [users, setUsers] = useState<UserProfile[]>(() => getStoredUsers());
 
-  // Load from Supabase & local persistence
+  // Load from Supabase & local persistence (with auto-sync on focus/visibility change)
   useEffect(() => {
-    fetchAllAppData().then((res) => {
-      setAreas(res.areas);
-      setLocations(res.locations);
-      setCategories(res.categories);
-      setPics(res.pics);
-    });
-    fetchRemoteUsers().then((remoteUsers) => {
-      setUsers(remoteUsers);
-    });
+    const loadData = () => {
+      fetchAllAppData().then((res) => {
+        setAreas(res.areas);
+        setLocations(res.locations);
+        setCategories(res.categories);
+        setPics(res.pics);
+      });
+      fetchRemoteUsers().then((remoteUsers) => {
+        setUsers(remoteUsers);
+      });
+    };
+
+    loadData();
+
+    const handleSync = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+
+    window.addEventListener("focus", handleSync);
+    document.addEventListener("visibilitychange", handleSync);
+    return () => {
+      window.removeEventListener("focus", handleSync);
+      document.removeEventListener("visibilitychange", handleSync);
+    };
   }, []);
 
   // Handlers for Area

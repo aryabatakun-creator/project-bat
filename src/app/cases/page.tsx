@@ -33,15 +33,32 @@ export default function CasesPage() {
   const [selectedCase, setSelectedCase] = useState<CaseItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Load from Supabase & local persistence
+  // Load from Supabase & local persistence (with auto-sync on focus/visibility change)
   useEffect(() => {
-    fetchAllAppData().then((res) => {
-      setAreas(res.areas);
-      setLocations(res.locations);
-      setCategories(res.categories);
-      setPics(res.pics);
-      setCases(res.cases);
-    });
+    const loadData = () => {
+      fetchAllAppData().then((res) => {
+        setAreas(res.areas);
+        setLocations(res.locations);
+        setCategories(res.categories);
+        setPics(res.pics);
+        setCases(res.cases);
+      });
+    };
+
+    loadData();
+
+    const handleSync = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+
+    window.addEventListener("focus", handleSync);
+    document.addEventListener("visibilitychange", handleSync);
+    return () => {
+      window.removeEventListener("focus", handleSync);
+      document.removeEventListener("visibilitychange", handleSync);
+    };
   }, []);
 
   const filteredCases = useMemo(() => {

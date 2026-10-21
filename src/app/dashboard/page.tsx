@@ -42,15 +42,32 @@ export default function DashboardPage() {
   };
   const [filters, setFilters] = useState<FilterState>(defaultFilters);
 
-  // Load from Supabase & local persistence
+  // Load from Supabase & local persistence (with auto-sync on focus/visibility change)
   useEffect(() => {
-    fetchAllAppData().then((res) => {
-      setAreas(res.areas);
-      setLocations(res.locations);
-      setCategories(res.categories);
-      setPics(res.pics);
-      setCases(res.cases);
-    });
+    const loadData = () => {
+      fetchAllAppData().then((res) => {
+        setAreas(res.areas);
+        setLocations(res.locations);
+        setCategories(res.categories);
+        setPics(res.pics);
+        setCases(res.cases);
+      });
+    };
+
+    loadData();
+
+    const handleSync = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadData();
+      }
+    };
+
+    window.addEventListener("focus", handleSync);
+    document.addEventListener("visibilitychange", handleSync);
+    return () => {
+      window.removeEventListener("focus", handleSync);
+      document.removeEventListener("visibilitychange", handleSync);
+    };
   }, []);
 
   // Filtered Cases

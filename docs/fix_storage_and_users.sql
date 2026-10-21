@@ -74,6 +74,21 @@ USING (bucket_id = 'case-photos');
 -- --------------------------------------------------------------------
 -- 3. PASTIKAN SELURUH TABEL OPERASIONAL DAPAT DIAKSES OLEH WEB APP
 -- --------------------------------------------------------------------
+DROP POLICY IF EXISTS "Allow public access master_areas" ON master_areas;
+CREATE POLICY "Allow public access master_areas"
+ON master_areas FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public access master_categories" ON master_categories;
+CREATE POLICY "Allow public access master_categories"
+ON master_categories FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow public access master_pics" ON master_pics;
+CREATE POLICY "Allow public access master_pics"
+ON master_pics FOR ALL TO anon, authenticated
+USING (true) WITH CHECK (true);
+
 DROP POLICY IF EXISTS "Allow public access master_locations" ON master_locations;
 CREATE POLICY "Allow public access master_locations"
 ON master_locations FOR ALL TO anon, authenticated
