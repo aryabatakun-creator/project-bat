@@ -8,6 +8,7 @@ import { CaseDetailModal } from "@/components/cases/CaseDetailModal";
 import { CaseItem } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { useNotifications } from "@/lib/notificationContext";
+import { getAutoDownloadUrl } from "@/lib/utils";
 import {
   fetchAllAppData,
   getCachedData,
@@ -132,6 +133,7 @@ export default function CasesPage() {
       "Progress (%)",
       "Last Update",
       "Remarks",
+      "URL Foto (Auto-Download)",
     ];
     const rows = filteredCases.map((c) => {
       const rawArea = c.area_name || "";
@@ -139,33 +141,44 @@ export default function CasesPage() {
       const locOnly =
         c.location_name ||
         (rawArea.includes(" - ") ? rawArea.split(" - ").slice(1).join(" - ") : "");
+
+      const photoUrls = (c.attachments || [])
+        .map((att) => getAutoDownloadUrl(att.file_url, att.file_name))
+        .filter(Boolean);
+      const photoUrlValue = photoUrls.join(" ; ");
+
       return [
-        c.case_id,
-        c.date_reported,
-        c.category_name,
-        `"${c.case_title.replace(/"/g, '""')}"`,
-        areaOnly,
-        locOnly,
-        c.priority,
-        c.pic_name,
-        c.target_date,
-        c.status,
+        `"${(c.case_id || "").replace(/"/g, '""')}"`,
+        `"${(c.date_reported || "").replace(/"/g, '""')}"`,
+        `"${(c.category_name || "").replace(/"/g, '""')}"`,
+        `"${(c.case_title || "").replace(/"/g, '""')}"`,
+        `"${areaOnly.replace(/"/g, '""')}"`,
+        `"${locOnly.replace(/"/g, '""')}"`,
+        `"${(c.priority || "").replace(/"/g, '""')}"`,
+        `"${(c.pic_name || "").replace(/"/g, '""')}"`,
+        `"${(c.target_date || "").replace(/"/g, '""')}"`,
+        `"${(c.status || "").replace(/"/g, '""')}"`,
         c.progress,
-        c.last_update,
+        `"${(c.last_update || "").replace(/"/g, '""')}"`,
         `"${(c.remarks || "").replace(/"/g, '""')}"`,
+        `"${photoUrlValue.replace(/"/g, '""')}"`,
       ];
     });
 
     const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
+      "\uFEFF" + [headers.join(","), ...rows.map((e) => e.join(","))].join("\r\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `BAT_Case_Monitoring_${new Date().toISOString().split("T")[0]}.csv`);
+    link.setAttribute("href", url);
+    link.setAttribute(
+      "download",
+      `BAT_Case_Monitoring_${new Date().toISOString().split("T")[0]}.csv`
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const canCreate = user.role === "admin" || user.role === "supervisor";

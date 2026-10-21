@@ -88,3 +88,46 @@ export function getProgressBarColor(progress: number): string {
   if (progress <= 70) return "bg-amber-500";
   return "bg-emerald-500";
 }
+
+/**
+ * Transforms a Supabase Storage photo URL into an auto-download URL.
+ * When clicked in a browser or spreadsheet, the `?download=` query parameter
+ * instructs Supabase Storage to send `Content-Disposition: attachment; filename="..."`,
+ * triggering an immediate file download rather than opening an inline preview.
+ */
+export function getAutoDownloadUrl(fileUrl?: string, fileName?: string): string {
+  if (!fileUrl) return "";
+  // Do not export Base64 DataURLs into CSV to prevent cell truncation and corruption
+  if (fileUrl.startsWith("data:")) return "";
+
+  const cleanFileName = (fileName || "").replace(/["'\r\n]/g, "").trim();
+
+  let absoluteUrl = fileUrl;
+  if (!absoluteUrl.startsWith("http://") && !absoluteUrl.startsWith("https://")) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
+    if (supabaseUrl) {
+      const cleanPath = absoluteUrl.replace(/^\/+/, "");
+      if (cleanPath.startsWith("storage/v1/object/public/")) {
+        absoluteUrl = `${supabaseUrl.replace(/\/+$/, "")}/${cleanPath}`;
+      } else {
+        absoluteUrl = `${supabaseUrl.replace(/\/+$/, "")}/storage/v1/object/public/case-photos/${cleanPath}`;
+      }
+    } else {
+      return "";
+    }
+  }
+
+  try {
+    const url = new URL(absoluteUrl);
+    if (!url.searchParams.has("download")) {
+      url.searchParams.set("download", cleanFileName || "");
+    }
+    return url.toString();
+  } catch {
+    const sep = absoluteUrl.includes("?") ? "&" : "?";
+    return cleanFileName
+      ? `${absoluteUrl}${sep}download=${encodeURIComponent(cleanFileName)}`
+      : `${absoluteUrl}${sep}download=`;
+  }
+}
+
