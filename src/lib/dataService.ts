@@ -280,8 +280,12 @@ export async function fetchAllAppData(): Promise<{
           };
         });
 
+      // 5. Merge Cases
+      // Only retain local-created cases that have not yet been synced to DB (!isValidUuid(lc.id)).
+      // Any case that has a valid database UUID but does not exist in dbCases was deleted on the server.
       const localOnlyCases = cached.cases.filter(
         (lc) =>
+          !isValidUuid(lc.id) &&
           !dbCases.some(
             (dc) => dc.id === lc.id || dc.case_id === lc.case_id
           )
@@ -390,18 +394,42 @@ export async function saveCaseItem(
     editingCase?.date_reported ||
     new Date().toISOString().split("T")[0];
   const caseYear = new Date(reportDate).getFullYear();
-  const existingYearCases = baseList.filter((c) =>
-    c.case_id?.startsWith(`BAT-${caseYear}-`)
-  );
-  let maxSeq = existingYearCases.length;
-  existingYearCases.forEach((c) => {
-    const parts = (c.case_id || "").split("-");
-    const num = parseInt(parts[2] || "0", 10);
-    if (!isNaN(num) && num > maxSeq) maxSeq = num;
-  });
-  const targetCaseId =
-    editingCase?.case_id ||
-    `BAT-${caseYear}-${String(maxSeq + 1).padStart(3, "0")}`;
+
+  let targetCaseId = editingCase?.case_id;
+
+  if (!targetCaseId) {
+    const existingYearCases = baseList.filter((c) =>
+      c.case_id?.startsWith(`BAT-${caseYear}-`)
+    );
+    let maxSeq = existingYearCases.length;
+    existingYearCases.forEach((c) => {
+      const parts = (c.case_id || "").split("-");
+      const num = parseInt(parts[2] || "0", 10);
+      if (!isNaN(num) && num > maxSeq) maxSeq = num;
+    });
+
+    // Scan remote Supabase DB to prevent sequence collision with cases created from other devices
+    const supabaseClient = createClient();
+    if (supabaseClient) {
+      try {
+        const { data: dbCasesSeq } = await supabaseClient
+          .from("cases")
+          .select("case_id")
+          .ilike("case_id", `BAT-${caseYear}-%`);
+        if (dbCasesSeq && dbCasesSeq.length > 0) {
+          dbCasesSeq.forEach((c: any) => {
+            const parts = (c.case_id || "").split("-");
+            const num = parseInt(parts[2] || "0", 10);
+            if (!isNaN(num) && num > maxSeq) maxSeq = num;
+          });
+        }
+      } catch (err) {
+        console.warn("Could not query DB case_ids for sequence:", err);
+      }
+    }
+
+    targetCaseId = `BAT-${caseYear}-${String(maxSeq + 1).padStart(3, "0")}`;
+  }
 
   // 1. Upload photo files to Supabase Storage bucket `case-photos` (with Base64 fallback)
   const newAttachments: CaseAttachment[] = [];
@@ -587,32 +615,23 @@ export async function saveCaseItem(
         remarks: newCase.remarks,
       };
 
-      const fullInsertPayload: Record<string, any> = {
-        ...baseInsertPayload,
-        location_name: newCase.location_name || null,
-        location_id: isValidUuid(newCase.location_id)
-          ? newCase.location_id
-          : null,
-      };
+      let inserted: any = null;
+      let lastError: any = null;
+      let caseIdAttempt = newCase.case_id;
 
-      let { data: inserted, error } = await supabase
-        .from("cases")
-        .insert(fullInsertPayload)
-        .select(
-          `
-          *,
-          master_categories(name),
-          master_areas(name),
-          master_pics(name)
-        `
-        )
-        .maybeSingle();
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const payloadToTry: Record<string, any> = {
+          ...baseInsertPayload,
+          case_id: caseIdAttempt,
+          location_name: newCase.location_name || null,
+          location_id: isValidUuid(newCase.location_id)
+            ? newCase.location_id
+            : null,
+        };
 
-      // Fallback if location_name column hasn't been added in DB yet
-      if (error) {
-        const retry = await supabase
+        let res = await supabase
           .from("cases")
-          .insert(baseInsertPayload)
+          .insert(payloadToTry)
           .select(
             `
             *,
@@ -622,7 +641,52 @@ export async function saveCaseItem(
           `
           )
           .maybeSingle();
-        inserted = retry.data;
+
+        // Fallback if location_name or location_id column hasn't been added in DB yet
+        if (
+          res.error &&
+          (res.error.message?.includes("location_name") ||
+            res.error.message?.includes("location_id"))
+        ) {
+          res = await supabase
+            .from("cases")
+            .insert({ ...baseInsertPayload, case_id: caseIdAttempt })
+            .select(
+              `
+              *,
+              master_categories(name),
+              master_areas(name),
+              master_pics(name)
+            `
+            )
+            .maybeSingle();
+        }
+
+        if (!res.error && res.data) {
+          inserted = res.data;
+          break;
+        }
+
+        lastError = res.error;
+        // If duplicate key violation on case_id, increment sequence and retry
+        if (
+          res.error &&
+          (res.error.code === "23505" ||
+            res.error.message?.toLowerCase().includes("duplicate key") ||
+            res.error.message?.toLowerCase().includes("unique constraint"))
+        ) {
+          const parts = caseIdAttempt.split("-");
+          const nextSeq = (parseInt(parts[2] || "0", 10) || 0) + 1;
+          caseIdAttempt = `BAT-${caseYear}-${String(nextSeq).padStart(3, "0")}`;
+          newCase.case_id = caseIdAttempt;
+          continue;
+        }
+
+        break;
+      }
+
+      if (!inserted && lastError) {
+        console.error("Supabase insert case error:", lastError);
       }
 
       if (inserted) {
@@ -674,15 +738,21 @@ export async function removeCaseItem(
   addDeletedId(id);
   if (target?.case_id) addDeletedId(target.case_id);
 
-  const nextCases = currentCases.filter((c) => c.id !== id);
+  const nextCases = currentCases.filter(
+    (c) => c.id !== id && (!target?.case_id || c.case_id !== target.case_id)
+  );
   writeLocal(KEYS.CASES, nextCases);
 
   const supabase = createClient();
   if (supabase) {
-    if (isValidUuid(id)) {
-      await supabase.from("cases").delete().eq("id", id);
-    } else if (target?.case_id) {
-      await supabase.from("cases").delete().eq("case_id", target.case_id);
+    try {
+      if (isValidUuid(id)) {
+        await supabase.from("cases").delete().eq("id", id);
+      } else if (target?.case_id) {
+        await supabase.from("cases").delete().eq("case_id", target.case_id);
+      }
+    } catch (err) {
+      console.warn("Notice deleting case from Supabase:", err);
     }
   }
 

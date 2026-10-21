@@ -6,7 +6,15 @@ import { MasterTabs } from "@/components/master/MasterTabs";
 import { MasterArea, MasterLocation, MasterCategory, MasterPic, UserProfile, AppRole } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
-import { getStoredUsers, saveStoredUsers, MAX_USERS_LIMIT } from "@/lib/userStore";
+import {
+  getStoredUsers,
+  saveStoredUsers,
+  MAX_USERS_LIMIT,
+  fetchRemoteUsers,
+  saveRemoteUser,
+  deleteRemoteUser,
+  updateRemoteUserPassword,
+} from "@/lib/userStore";
 import {
   fetchAllAppData,
   getCachedData,
@@ -40,7 +48,9 @@ export default function MasterDataPage() {
       setCategories(res.categories);
       setPics(res.pics);
     });
-    setUsers(getStoredUsers());
+    fetchRemoteUsers().then((remoteUsers) => {
+      setUsers(remoteUsers);
+    });
   }, []);
 
   // Handlers for Area
@@ -123,48 +133,20 @@ export default function MasterDataPage() {
     };
     const updated = [newUser, ...users];
     setUsers(updated);
-    saveStoredUsers(updated);
-
-    const supabase = createClient();
-    if (supabase) {
-      try {
-        await supabase.auth.signUp({
-          email,
-          password: password || "Password123",
-          options: {
-            data: {
-              full_name: name,
-              role,
-            },
-          },
-        });
-      } catch (err) {
-        console.warn("Auth signup notice:", err);
-      }
-      // Insert profile metadata
-      await supabase.from("profiles").upsert({
-        id: newUser.id,
-        full_name: name,
-        role,
-      });
-    }
+    await saveRemoteUser(newUser);
   };
 
-  const handleUpdatePassword = (id: string, newPassword: string) => {
+  const handleUpdatePassword = async (id: string, newPassword: string) => {
     const updated = users.map((u) => (u.id === id ? { ...u, password: newPassword } : u));
     setUsers(updated);
-    saveStoredUsers(updated);
+    await updateRemoteUserPassword(id, newPassword);
   };
 
   const handleDeleteUser = async (id: string) => {
     if (confirm("Hapus akun user ini dari sistem?")) {
       const updated = users.filter((u) => u.id !== id);
       setUsers(updated);
-      saveStoredUsers(updated);
-      const supabase = createClient();
-      if (supabase) {
-        await supabase.from("profiles").delete().eq("id", id);
-      }
+      await deleteRemoteUser(id);
     }
   };
 

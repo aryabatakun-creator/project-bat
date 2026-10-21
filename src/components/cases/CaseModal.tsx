@@ -26,6 +26,94 @@ interface CaseModalProps {
   pics: MasterPic[];
 }
 
+async function optimizeImageFile(
+  file: File
+): Promise<{ file: File; dataUrl: string }> {
+  // 1. Try browser-image-compression with 2.5-second timeout
+  try {
+    const compressionPromise = imageCompression(file, {
+      maxSizeMB: 0.2, // Target maksimal 200 KB
+      maxWidthOrHeight: 1280,
+      useWebWorker: false,
+      fileType: "image/webp",
+    });
+
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error("Compression timeout")), 2500)
+    );
+
+    const compressedBlob = await Promise.race([
+      compressionPromise,
+      timeoutPromise,
+    ]);
+    const cleanBaseName = file.name.replace(/\.[^/.]+$/, "");
+    const finalFile = new File([compressedBlob], `${cleanBaseName}.webp`, {
+      type: "image/webp",
+    });
+    const dataUrl = await fileToDataUrl(finalFile);
+    return { file: finalFile, dataUrl };
+  } catch {
+    // 2. Fast Canvas Fallback (reliable across iOS Safari & Android, downsizes immediately)
+    return new Promise<{ file: File; dataUrl: string }>((resolve) => {
+      if (typeof window === "undefined") {
+        fileToDataUrl(file).then((du) => resolve({ file, dataUrl: du }));
+        return;
+      }
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const maxDim = 1280;
+        let width = img.width || maxDim;
+        let height = img.height || maxDim;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const dataUrl = canvas.toDataURL("image/webp", 0.75);
+          canvas.toBlob(
+            (blob) => {
+              if (blob) {
+                const cleanBaseName = file.name.replace(/\.[^/.]+$/, "");
+                const finalFile = new File(
+                  [blob],
+                  `${cleanBaseName}.webp`,
+                  { type: "image/webp" }
+                );
+                resolve({ file: finalFile, dataUrl });
+              } else {
+                fileToDataUrl(file).then((du) =>
+                  resolve({ file, dataUrl: du })
+                );
+              }
+            },
+            "image/webp",
+            0.75
+          );
+        } else {
+          fileToDataUrl(file).then((du) => resolve({ file, dataUrl: du }));
+        }
+      };
+      img.onerror = () => {
+        URL.revokeObjectURL(objectUrl);
+        fileToDataUrl(file).then((du) => resolve({ file, dataUrl: du }));
+      };
+      img.src = objectUrl;
+    });
+  }
+}
+
 export function CaseModal({
   isOpen,
   onClose,
@@ -54,6 +142,10 @@ export function CaseModal({
   const [photoFiles, setPhotoFiles] = useState<File[]>([]);
   const [photoPreviews, setPhotoPreviews] = useState<string[]>([]);
   const [isCompressing, setIsCompressing] = useState(false);
+  const [compressProgress, setCompressProgress] = useState<{
+    current: number;
+    total: number;
+  } | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Helper to get locations belonging to an area
@@ -149,35 +241,17 @@ export function CaseModal({
 
     const files = Array.from(e.target.files);
     setIsCompressing(true);
+    setCompressProgress({ current: 0, total: files.length });
 
     try {
-      const options = {
-        maxSizeMB: 0.2, // Target maksimal 200 KB
-        maxWidthOrHeight: 1280,
-        useWebWorker: false,
-        fileType: "image/webp",
-      };
-
       const processedFiles: File[] = [];
       const previews: string[] = [];
 
-      for (const file of files) {
-        let finalFile = file;
-        try {
-          const compressedBlob = await imageCompression(file, options);
-          finalFile = new File(
-            [compressedBlob],
-            file.name.replace(/\.[^/.]+$/, "") + ".webp",
-            { type: "image/webp" }
-          );
-        } catch (compErr) {
-          console.warn("Using original image file fallback:", compErr);
-          finalFile = file;
-        }
-
-        const dataUrl = await fileToDataUrl(finalFile);
-        processedFiles.push(finalFile);
-        previews.push(dataUrl);
+      for (let i = 0; i < files.length; i++) {
+        setCompressProgress({ current: i + 1, total: files.length });
+        const result = await optimizeImageFile(files[i]);
+        processedFiles.push(result.file);
+        previews.push(result.dataUrl);
       }
 
       setPhotoFiles((prev) => [...prev, ...processedFiles]);
@@ -186,6 +260,7 @@ export function CaseModal({
       console.error("Photo selection error:", err);
     } finally {
       setIsCompressing(false);
+      setCompressProgress(null);
       e.target.value = "";
     }
   };
@@ -440,36 +515,70 @@ export function CaseModal({
 
           {/* Photo Attachments */}
           <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-              Lampiran Foto Bukti ({existingAttachments.length + photoPreviews.length} Foto)
-            </label>
-            <div className="border-2 border-dashed border-slate-300 rounded-xl p-3 bg-slate-50 text-center hover:bg-slate-100/70 transition-colors">
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Lampiran Foto Bukti ({existingAttachments.length + photoPreviews.length} Foto)
+              </label>
+              {isCompressing && (
+                <span className="text-[11px] font-bold text-amber-700 flex items-center gap-1.5 animate-pulse">
+                  <Loader2 className="w-3 h-3 animate-spin text-amber-600" />
+                  <span>
+                    Mengoptimasi foto {compressProgress ? `(${compressProgress.current}/${compressProgress.total})` : "..."}
+                  </span>
+                </span>
+              )}
+            </div>
+
+            <div
+              className={`border-2 border-dashed rounded-xl p-3.5 transition-all text-center ${
+                isCompressing
+                  ? "border-amber-400 bg-amber-50/70"
+                  : isSaving
+                  ? "border-slate-200 bg-slate-50 opacity-60 cursor-not-allowed"
+                  : "border-slate-300 bg-slate-50 hover:bg-slate-100/70"
+              }`}
+            >
               <input
                 type="file"
                 id="photo-upload"
                 multiple
                 accept="image/*"
+                disabled={isCompressing || isSaving}
                 onChange={handlePhotoSelect}
                 className="hidden"
               />
               <label
-                htmlFor="photo-upload"
-                className="cursor-pointer flex flex-col items-center justify-center gap-1"
+                htmlFor={isCompressing || isSaving ? undefined : "photo-upload"}
+                className={`flex flex-col items-center justify-center gap-1.5 ${
+                  isCompressing || isSaving ? "cursor-wait" : "cursor-pointer"
+                }`}
               >
-                <Upload className="w-6 h-6 text-slate-400" />
-                <span className="text-xs font-semibold text-slate-700">
-                  {isCompressing
-                    ? "Memproses gambar..."
-                    : "Klik untuk pilih foto bukti"}
-                </span>
-                <span className="text-[10px] text-slate-400">
-                  Foto otomatis dioptimasi sebelum disimpan
-                </span>
+                {isCompressing ? (
+                  <>
+                    <Loader2 className="w-6 h-6 text-amber-500 animate-spin" />
+                    <span className="text-xs font-bold text-amber-900">
+                      Memproses &amp; Mengoptimasi Foto {compressProgress ? `(${compressProgress.current}/${compressProgress.total})` : "..."}
+                    </span>
+                    <span className="text-[10px] text-amber-700">
+                      Mohon tunggu sejenak, foto sedang dioptimalkan agar ringan dan cepat dimuat
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-6 h-6 text-slate-400" />
+                    <span className="text-xs font-semibold text-slate-700">
+                      Klik untuk pilih foto bukti
+                    </span>
+                    <span className="text-[10px] text-slate-400">
+                      Mendukung kamera &amp; galeri, otomatis dikompres ke WebP hemat kuota
+                    </span>
+                  </>
+                )}
               </label>
             </div>
 
-            {/* Photo Previews (Existing + Newly Added) */}
-            {(existingAttachments.length > 0 || photoPreviews.length > 0) && (
+            {/* Photo Previews (Existing + Newly Added + Skeleton Loading) */}
+            {(existingAttachments.length > 0 || photoPreviews.length > 0 || isCompressing) && (
               <div className="flex items-center gap-2.5 mt-2.5 overflow-x-auto py-1">
                 {existingAttachments.map((att) => (
                   <div
@@ -483,8 +592,9 @@ export function CaseModal({
                     />
                     <button
                       type="button"
+                      disabled={isSaving || isCompressing}
                       onClick={() => handleRemoveExistingAttachment(att.id)}
-                      className="absolute top-1 right-1 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      className="absolute top-1 right-1 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-0"
                       title="Hapus foto"
                     >
                       <Trash2 className="w-3 h-3" />
@@ -504,14 +614,24 @@ export function CaseModal({
                     />
                     <button
                       type="button"
+                      disabled={isSaving || isCompressing}
                       onClick={() => handleRemoveNewPhoto(i)}
-                      className="absolute top-1 right-1 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                      className="absolute top-1 right-1 bg-slate-900/80 text-white p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-0"
                       title="Batal pilih foto"
                     >
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
                 ))}
+
+                {isCompressing && (
+                  <div className="w-20 h-20 rounded-xl border-2 border-dashed border-amber-400 bg-amber-50/70 shrink-0 flex flex-col items-center justify-center gap-1 animate-pulse shadow-2xs">
+                    <Loader2 className="w-5 h-5 text-amber-600 animate-spin" />
+                    <span className="text-[9px] font-bold text-amber-800 text-center px-1">
+                      Memuat...
+                    </span>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -528,10 +648,18 @@ export function CaseModal({
             <button
               type="submit"
               disabled={isSaving || isCompressing}
-              className="px-5 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer"
+              className="px-5 py-2 text-xs font-bold text-slate-950 bg-amber-400 hover:bg-amber-500 rounded-lg shadow-sm transition-all flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isSaving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              <span>{initialData ? "Simpan Perubahan" : "Simpan Kasus"}</span>
+              <span>
+                {isSaving
+                  ? photoFiles.length > 0
+                    ? "Mengunggah foto & menyimpan..."
+                    : "Menyimpan kasus..."
+                  : initialData
+                  ? "Simpan Perubahan"
+                  : "Simpan Kasus"}
+              </span>
             </button>
           </div>
         </form>

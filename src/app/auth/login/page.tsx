@@ -6,7 +6,7 @@ import { Lock, Mail, ArrowRight, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/lib/authContext";
 import { createClient } from "@/lib/supabase/client";
 import { AppRole } from "@/lib/types";
-import { verifyUserCredentials } from "@/lib/userStore";
+import { verifyUserCredentials, fetchRemoteUsers } from "@/lib/userStore";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -50,7 +50,8 @@ export default function LoginPage() {
         }
       }
 
-      // 2. Authenticate against registered users in userStore
+      // 2. Authenticate against registered users in userStore (refresh from remote first if available)
+      await fetchRemoteUsers();
       const verification = verifyUserCredentials(email, password);
       if (!verification.success || !verification.user) {
         setErrorMsg(verification.message || "Email atau kata sandi tidak sesuai.");
