@@ -23,30 +23,38 @@ export default function LoginPage() {
     setErrorMsg("");
 
     try {
-      // 1. Try Supabase Auth if connected
+      // 1. Try Supabase Auth if connected (with 2.5s timeout to prevent hanging)
       const supabase = createClient();
       if (supabase && email && password) {
-        const { data, error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-
-        if (!error && data.user) {
-          // Successfully logged in via Supabase Auth
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("*")
-            .eq("id", data.user.id)
-            .single();
-
-          await login(
-            data.user.email || email,
-            (profile?.role as AppRole) || (data.user.user_metadata?.role as AppRole) || "supervisor",
-            profile?.full_name || (data.user.user_metadata?.full_name as string) || email.split("@")[0],
-            data.user.id
+        try {
+          const authPromise = supabase.auth.signInWithPassword({
+            email,
+            password,
+          });
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("Auth timeout")), 2500)
           );
-          router.push("/dashboard");
-          return;
+          const { data, error } = await Promise.race([authPromise, timeoutPromise]);
+
+          if (!error && data?.user) {
+            // Successfully logged in via Supabase Auth
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", data.user.id)
+              .single();
+
+            await login(
+              data.user.email || email,
+              (profile?.role as AppRole) || (data.user.user_metadata?.role as AppRole) || "supervisor",
+              profile?.full_name || (data.user.user_metadata?.full_name as string) || email.split("@")[0],
+              data.user.id
+            );
+            router.push("/dashboard");
+            return;
+          }
+        } catch {
+          // Timeout or connection notice, proceed directly to app_users verification
         }
       }
 
