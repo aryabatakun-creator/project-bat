@@ -154,19 +154,14 @@ export function GlobalFilterBar({
           </div>
         </div>
 
-        {/* 2. Project */}
+        {/* 2. Project (Static) */}
         <div>
           <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
             Project
           </label>
-          <select
-            value={filters.project}
-            onChange={(e) => updateField("project", e.target.value)}
-            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-semibold focus:ring-2 focus:ring-amber-500 focus:outline-none"
-          >
-            <option value="NPN - Project BAT">NPN - Project BAT</option>
-            <option value="Semua Project">Semua Project</option>
-          </select>
+          <div className="w-full bg-slate-100/90 border border-slate-200 rounded-xl px-3 py-1.5 text-xs text-slate-800 font-bold select-none cursor-default flex items-center min-h-[34px]">
+            <span>BAT</span>
+          </div>
         </div>
 
         {/* 3. Area */}

@@ -36,7 +36,7 @@ export default function DashboardPage() {
   const defaultFilters: FilterState = {
     startDate: "",
     endDate: "",
-    project: "NPN - Project BAT",
+    project: "BAT",
     area: "Semua Area",
     category: "Semua Kategori",
     status: "Semua Status",
