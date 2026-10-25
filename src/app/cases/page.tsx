@@ -9,6 +9,7 @@ import { CaseItem } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { useNotifications } from "@/lib/notificationContext";
 import { getAutoDownloadUrl } from "@/lib/utils";
+import { createClient } from "@/lib/supabase/client";
 import {
   fetchAllAppData,
   getCachedData,
@@ -34,7 +35,7 @@ export default function CasesPage() {
   const [selectedCase, setSelectedCase] = useState<CaseItem | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
 
-  // Load from Supabase & local persistence (with auto-sync on focus/visibility change)
+  // Load from Supabase & local persistence (with realtime sync and focus/visibility change)
   useEffect(() => {
     const loadData = () => {
       fetchAllAppData().then((res) => {
@@ -48,6 +49,23 @@ export default function CasesPage() {
 
     loadData();
 
+    // 1. Supabase Realtime Subscription for cases table
+    const supabase = createClient();
+    let channel: any = null;
+    if (supabase) {
+      channel = supabase
+        .channel("cases-page-realtime")
+        .on(
+          "postgres_changes",
+          { event: "*", schema: "public", table: "cases" },
+          () => {
+            loadData();
+          }
+        )
+        .subscribe();
+    }
+
+    // 2. Window focus & visibility sync (e.g. returning to tab or app)
     const handleSync = () => {
       if (typeof document !== "undefined" && document.visibilityState === "visible") {
         loadData();
@@ -57,6 +75,9 @@ export default function CasesPage() {
     window.addEventListener("focus", handleSync);
     document.addEventListener("visibilitychange", handleSync);
     return () => {
+      if (channel && supabase) {
+        supabase.removeChannel(channel);
+      }
       window.removeEventListener("focus", handleSync);
       document.removeEventListener("visibilitychange", handleSync);
     };

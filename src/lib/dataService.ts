@@ -21,8 +21,16 @@ const KEYS = {
   LOCATIONS: "bat_cache_locations_v3",
   CATEGORIES: "bat_cache_categories_v3",
   PICS: "bat_cache_pics_v3",
-  DELETED_IDS: "bat_deleted_ids_v3",
 };
+
+// Purge legacy poisoned tombstone caches from client localStorage
+if (typeof window !== "undefined") {
+  try {
+    localStorage.removeItem("bat_deleted_ids_v3");
+    localStorage.removeItem("bat_deleted_ids_v2");
+    localStorage.removeItem("bat_deleted_ids_v1");
+  } catch {}
+}
 
 export const STORAGE_BUCKET = "case-photos";
 
@@ -64,38 +72,13 @@ function writeLocal<T>(key: string, data: T): void {
   }
 }
 
-function getDeletedIds(): string[] {
-  return readLocal<string[]>(KEYS.DELETED_IDS, []);
-}
-
-function addDeletedId(id: string) {
-  if (!id) return;
-  const current = getDeletedIds();
-  if (!current.includes(id)) {
-    writeLocal(KEYS.DELETED_IDS, [...current, id]);
-  }
-}
-
 export function getCachedData() {
-  const deleted = new Set(getDeletedIds());
   return {
-    areas: readLocal<MasterArea[]>(KEYS.AREAS, initialAreas).filter(
-      (a) => !deleted.has(a.id)
-    ),
-    locations: readLocal<MasterLocation[]>(
-      KEYS.LOCATIONS,
-      initialLocations
-    ).filter((l) => !deleted.has(l.id)),
-    categories: readLocal<MasterCategory[]>(
-      KEYS.CATEGORIES,
-      initialCategories
-    ).filter((c) => !deleted.has(c.id)),
-    pics: readLocal<MasterPic[]>(KEYS.PICS, initialPics).filter(
-      (p) => !deleted.has(p.id)
-    ),
-    cases: readLocal<CaseItem[]>(KEYS.CASES, initialCases).filter(
-      (c) => !deleted.has(c.id) && !deleted.has(c.case_id)
-    ),
+    areas: readLocal<MasterArea[]>(KEYS.AREAS, initialAreas),
+    locations: readLocal<MasterLocation[]>(KEYS.LOCATIONS, initialLocations),
+    categories: readLocal<MasterCategory[]>(KEYS.CATEGORIES, initialCategories),
+    pics: readLocal<MasterPic[]>(KEYS.PICS, initialPics),
+    cases: readLocal<CaseItem[]>(KEYS.CASES, initialCases),
   };
 }
 
@@ -108,7 +91,6 @@ export async function fetchAllAppData(): Promise<{
   isSupabaseConnected: boolean;
 }> {
   const cached = getCachedData();
-  const deleted = new Set(getDeletedIds());
   const supabase = createClient();
 
   if (!supabase) {
@@ -144,9 +126,7 @@ export async function fetchAllAppData(): Promise<{
     // 1. Merge Areas
     let finalAreas = cached.areas;
     if (resAreas.data && resAreas.data.length > 0) {
-      const dbAreas: MasterArea[] = resAreas.data.filter(
-        (a: any) => !deleted.has(a.id) && !deleted.has(a.name)
-      );
+      const dbAreas: MasterArea[] = resAreas.data;
       const localOnlyAreas = cached.areas.filter(
         (la) =>
           !isValidUuid(la.id) &&
@@ -159,19 +139,17 @@ export async function fetchAllAppData(): Promise<{
     // 2. Merge Locations
     let finalLocations = cached.locations;
     if (!resLocations.error && resLocations.data && resLocations.data.length > 0) {
-      const dbLocations: MasterLocation[] = resLocations.data
-        .filter((l: any) => !deleted.has(l.id))
-        .map((l: any) => ({
-          id: l.id,
-          area_id: l.area_id,
-          area_name:
-            l.master_areas?.name ||
-            l.area_name ||
-            finalAreas.find((a) => a.id === l.area_id)?.name ||
-            "Malang",
-          name: l.name,
-          created_at: l.created_at,
-        }));
+      const dbLocations: MasterLocation[] = resLocations.data.map((l: any) => ({
+        id: l.id,
+        area_id: l.area_id,
+        area_name:
+          l.master_areas?.name ||
+          l.area_name ||
+          finalAreas.find((a) => a.id === l.area_id)?.name ||
+          "Malang",
+        name: l.name,
+        created_at: l.created_at,
+      }));
       const localOnlyLocations = cached.locations.filter(
         (ll) =>
           !isValidUuid(ll.id) &&
@@ -188,9 +166,7 @@ export async function fetchAllAppData(): Promise<{
     // 3. Merge Categories
     let finalCategories = cached.categories;
     if (resCats.data && resCats.data.length > 0) {
-      const dbCats: MasterCategory[] = resCats.data.filter(
-        (c: any) => !deleted.has(c.id) && !deleted.has(c.name)
-      );
+      const dbCats: MasterCategory[] = resCats.data;
       const localOnlyCats = cached.categories.filter(
         (lc) =>
           !isValidUuid(lc.id) &&
@@ -203,9 +179,7 @@ export async function fetchAllAppData(): Promise<{
     // 4. Merge PICs
     let finalPics = cached.pics;
     if (resPics.data && resPics.data.length > 0) {
-      const dbPics: MasterPic[] = resPics.data.filter(
-        (p: any) => !deleted.has(p.id) && !deleted.has(p.name)
-      );
+      const dbPics: MasterPic[] = resPics.data;
       const localOnlyPics = cached.pics.filter(
         (lp) =>
           !isValidUuid(lp.id) &&
@@ -218,12 +192,10 @@ export async function fetchAllAppData(): Promise<{
     // 5. Merge Cases
     let finalCases = cached.cases;
     if (resCases.data) {
-      const dbCases: CaseItem[] = resCases.data
-        .filter((c: any) => !deleted.has(c.id) && !deleted.has(c.case_id))
-        .map((c: any) => {
-          const localMatch = cached.cases.find(
-            (lc) => lc.id === c.id || lc.case_id === c.case_id
-          ) as (CaseItem & { _localModified?: boolean }) | undefined;
+      const dbCases: CaseItem[] = resCases.data.map((c: any) => {
+        const localMatch = cached.cases.find(
+          (lc) => lc.id === c.id || lc.case_id === c.case_id
+        ) as (CaseItem & { _localModified?: boolean }) | undefined;
 
           const dbAttachments: CaseAttachment[] = Array.isArray(
             c.case_attachments
@@ -735,8 +707,6 @@ export async function removeCaseItem(
   currentCases: CaseItem[]
 ): Promise<CaseItem[]> {
   const target = currentCases.find((c) => c.id === id);
-  addDeletedId(id);
-  if (target?.case_id) addDeletedId(target.case_id);
 
   const nextCases = currentCases.filter(
     (c) => c.id !== id && (!target?.case_id || c.case_id !== target.case_id)
@@ -783,8 +753,6 @@ export async function removeMasterArea(
   current: MasterArea[]
 ): Promise<MasterArea[]> {
   const target = current.find((a) => a.id === id);
-  addDeletedId(id);
-  if (target?.name) addDeletedId(target.name);
 
   const next = current.filter((a) => a.id !== id);
   writeLocal(KEYS.AREAS, next);
@@ -841,7 +809,6 @@ export async function removeMasterLocation(
   current: MasterLocation[]
 ): Promise<MasterLocation[]> {
   const target = current.find((l) => l.id === id);
-  addDeletedId(id);
 
   const next = current.filter((l) => l.id !== id);
   writeLocal(KEYS.LOCATIONS, next);
@@ -885,8 +852,6 @@ export async function removeMasterCategory(
   current: MasterCategory[]
 ): Promise<MasterCategory[]> {
   const target = current.find((c) => c.id === id);
-  addDeletedId(id);
-  if (target?.name) addDeletedId(target.name);
 
   const next = current.filter((c) => c.id !== id);
   writeLocal(KEYS.CATEGORIES, next);
@@ -928,8 +893,6 @@ export async function removeMasterPic(
   current: MasterPic[]
 ): Promise<MasterPic[]> {
   const target = current.find((p) => p.id === id);
-  addDeletedId(id);
-  if (target?.name) addDeletedId(target.name);
 
   const next = current.filter((p) => p.id !== id);
   writeLocal(KEYS.PICS, next);
