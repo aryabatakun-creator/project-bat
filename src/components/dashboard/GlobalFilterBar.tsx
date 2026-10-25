@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useRef } from "react";
 import { Calendar, Clock, RotateCcw, FileDown, SlidersHorizontal } from "lucide-react";
 import { FilterState, MasterArea, MasterCategory } from "@/lib/types";
 
@@ -23,6 +23,9 @@ export function GlobalFilterBar({
   onReset,
   onExportPdf,
 }: FilterBarProps) {
+  const startInputRef = useRef<HTMLInputElement>(null);
+  const endInputRef = useRef<HTMLInputElement>(null);
+
   const updateField = (field: keyof FilterState, value: string) => {
     onChange({ ...filters, [field]: value });
   };
@@ -81,24 +84,73 @@ export function GlobalFilterBar({
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 pt-3.5">
         {/* 1. Periode Monitoring */}
         <div>
-          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">
-            Periode Tanggal
-          </label>
-          <div className="flex items-center gap-1 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs text-slate-700">
-            <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <input
-              type="date"
-              value={filters.startDate}
-              onChange={(e) => updateField("startDate", e.target.value)}
-              className="bg-transparent border-none p-0 text-[11px] text-slate-800 focus:outline-none w-24"
-            />
-            <span className="text-slate-400 text-xs">-</span>
-            <input
-              type="date"
-              value={filters.endDate}
-              onChange={(e) => updateField("endDate", e.target.value)}
-              className="bg-transparent border-none p-0 text-[11px] text-slate-800 focus:outline-none w-24"
-            />
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-1">
+              <Calendar className="w-3 h-3 text-slate-400" />
+              <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                Periode Tanggal
+              </label>
+            </div>
+            {(filters.startDate || filters.endDate) && (
+              <button
+                type="button"
+                onClick={() => {
+                  onChange({ ...filters, startDate: "", endDate: "" });
+                }}
+                className="text-[10px] font-bold text-amber-600 hover:text-amber-700 cursor-pointer"
+                title="Hapus Filter Tanggal"
+              >
+                Reset Tgl
+              </button>
+            )}
+          </div>
+          <div className="grid grid-cols-2 gap-1.5">
+            <div
+              onClick={() => {
+                try {
+                  startInputRef.current?.showPicker();
+                } catch {}
+              }}
+              className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100/80 focus-within:ring-2 focus-within:ring-amber-500 focus-within:bg-white cursor-pointer transition-all"
+              title="Klik untuk memilih Tanggal Mulai"
+            >
+              <input
+                ref={startInputRef}
+                type="date"
+                value={filters.startDate}
+                onChange={(e) => updateField("startDate", e.target.value)}
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
+                className="w-full bg-transparent border-none p-0 text-[11px] text-slate-800 font-semibold focus:outline-none cursor-pointer"
+                aria-label="Tanggal Mulai"
+              />
+            </div>
+            <div
+              onClick={() => {
+                try {
+                  endInputRef.current?.showPicker();
+                } catch {}
+              }}
+              className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2 py-1.5 text-xs text-slate-700 hover:bg-slate-100/80 focus-within:ring-2 focus-within:ring-amber-500 focus-within:bg-white cursor-pointer transition-all"
+              title="Klik untuk memilih Tanggal Akhir"
+            >
+              <input
+                ref={endInputRef}
+                type="date"
+                value={filters.endDate}
+                onChange={(e) => updateField("endDate", e.target.value)}
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
+                className="w-full bg-transparent border-none p-0 text-[11px] text-slate-800 font-semibold focus:outline-none cursor-pointer"
+                aria-label="Tanggal Akhir"
+              />
+            </div>
           </div>
         </div>
 
