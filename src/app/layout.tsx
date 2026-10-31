@@ -10,9 +10,9 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "Case Tracker by Orstedlabs - Case Monitoring & Follow-Up Tracker",
-  description: "Operational Case Monitoring System - Case Tracker by Orstedlabs",
-  applicationName: "Case Tracker by Orstedlabs",
+  title: "Project BAT - Monitoring & Follow Up Tracker",
+  description: "Operational Monitoring & Follow Up Tracker - Supported by Orstedlabs",
+  applicationName: "Project BAT Tracker",
   manifest: "/manifest.json",
   icons: {
     icon: [

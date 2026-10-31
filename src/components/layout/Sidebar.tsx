@@ -28,7 +28,7 @@ export function Sidebar() {
       roles: ["admin", "management", "supervisor"],
     },
     {
-      label: "Case Monitoring",
+      label: "Monitoring & Follow Up",
       href: "/cases",
       icon: ClipboardList,
       roles: ["admin", "management", "supervisor"],
@@ -77,8 +77,8 @@ export function Sidebar() {
           <div className="flex items-center gap-3 overflow-hidden">
             <div className="w-9 h-9 rounded-xl bg-[#0B1026] border border-slate-700/80 p-0.5 flex items-center justify-center shadow-md shrink-0 overflow-hidden">
               <img
-                src="/images/orstedlabs-mark.png"
-                alt="OrstedLabs"
+                src="/images/satpam-logo.png"
+                alt="Logo Satpam NPN"
                 className="w-full h-full object-contain"
               />
             </div>

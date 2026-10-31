@@ -210,10 +210,10 @@ export default function CasesPage() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-xs">
         <div>
           <h1 className="text-base font-bold text-slate-900 tracking-tight">
-            Case Monitoring &amp; Follow-Up List
+            Monitoring &amp; Follow Up Tracker
           </h1>
           <p className="text-xs text-slate-500">
-            Daftar lengkap seluruh kasus operasional ({filteredCases.length} kasus)
+            Rincian Monitoring &amp; Follow Up Tracker ({filteredCases.length} kasus)
           </p>
         </div>
 

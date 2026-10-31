@@ -1,7 +1,7 @@
 {
-  "name": "Case Tracker by Orstedlabs",
-  "short_name": "Case Tracker by Orstedlabs",
-  "description": "Case Monitoring & Follow-Up Tracker by Orstedlabs",
+  "name": "Project BAT Tracker",
+  "short_name": "Project BAT",
+  "description": "Monitoring & Follow Up Tracker by Orstedlabs",
   "start_url": "/",
   "id": "/",
   "scope": "/",

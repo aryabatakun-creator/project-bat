@@ -91,8 +91,8 @@ export default function LoginPage() {
           <div className="inline-flex items-center gap-3 bg-white border border-slate-200/90 px-4 py-2 rounded-2xl mb-4 shadow-xs">
             <div className="w-9 h-9 rounded-xl bg-[#0B1026] border border-slate-200/80 p-0.5 flex items-center justify-center shadow-xs overflow-hidden shrink-0">
               <img
-                src="/images/orstedlabs-mark.png"
-                alt="OrstedLabs"
+                src="/images/satpam-logo.png"
+                alt="Logo Satpam NPN"
                 className="w-full h-full object-contain"
               />
             </div>
@@ -101,7 +101,7 @@ export default function LoginPage() {
                 NPN - PROJECT BAT
               </span>
               <span className="text-[9px] text-slate-500 font-semibold tracking-wider block">
-                CASE MONITORING SYSTEM
+                MONITORING &amp; FOLLOW UP TRACKER
               </span>
             </div>
           </div>
@@ -110,7 +110,7 @@ export default function LoginPage() {
             NPN - PROJECT BAT PORTAL
           </h1>
           <p className="text-xs text-slate-500 mt-1 font-medium">
-            Operational Case Monitoring &amp; Follow-Up System
+            Operational Monitoring &amp; Follow Up Tracker
           </p>
         </div>
 

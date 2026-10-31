@@ -190,16 +190,16 @@ export function ExecutivePrintReport({
           <div>
             <div className="flex items-center gap-2.5">
               <img
-                src="/images/orstedlabs-logo-light.png"
-                alt="OrstedLabs"
-                className="h-6 w-auto object-contain"
+                src="/images/satpam-logo.png"
+                alt="Logo Satpam NPN"
+                className="h-7 w-auto object-contain"
               />
               <span className="text-slate-300 font-light text-sm">|</span>
               <span className="bg-slate-900 text-amber-400 font-black text-xs px-2 py-0.5 rounded">
                 NPN - PROJECT BAT
               </span>
               <h1 className="text-base font-black text-slate-900 tracking-tight uppercase">
-                Executive Case Monitoring &amp; Follow-Up Report
+                Executive Monitoring &amp; Follow-Up Report
               </h1>
             </div>
             <p className="text-[10px] text-slate-600 mt-0.5 font-medium">
@@ -429,7 +429,7 @@ export function ExecutivePrintReport({
         <div className="pt-1">
           <div className="flex items-center justify-between mb-1.5">
             <h2 className="text-[10px] font-black uppercase tracking-wider text-slate-900">
-              Rincian Daftar Kasus Operasional ({cases.length} Kasus)
+              Rincian Monitoring &amp; Follow Up Tracker ({cases.length} Kasus)
             </h2>
           </div>
 

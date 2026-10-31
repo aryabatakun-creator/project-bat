@@ -22,8 +22,8 @@ export function HeaderBranding() {
         <div className="flex items-center gap-3.5 z-10">
           <div className="w-10 h-10 rounded-xl bg-[#0B1026] border border-slate-700/80 p-1 flex items-center justify-center shrink-0 shadow-md">
             <img
-              src="/images/orstedlabs-mark.png"
-              alt="OrstedLabs"
+              src="/images/satpam-logo.png"
+              alt="Logo Satpam NPN"
               className="w-full h-full object-contain"
             />
           </div>
@@ -32,7 +32,7 @@ export function HeaderBranding() {
             <h1 className="text-base md:text-lg font-black tracking-tight text-white flex items-center gap-2">
               <span>NPN - PROJECT BAT</span>
               <span className="text-[11px] font-bold text-amber-400 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/30">
-                CASE MONITORING &amp; FOLLOW-UP TRACKER
+                MONITORING &amp; FOLLOW UP TRACKER
               </span>
             </h1>
             <p className="text-[11px] text-slate-400 tracking-wide mt-0.5 flex items-center gap-2 flex-wrap">
