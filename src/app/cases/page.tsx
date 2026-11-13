@@ -8,7 +8,11 @@ import { CaseDetailModal } from "@/components/cases/CaseDetailModal";
 import { CaseItem } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import { useNotifications } from "@/lib/notificationContext";
-import { getAutoDownloadUrl } from "@/lib/utils";
+import {
+  getAutoDownloadUrl,
+  formatDateReportedIndo,
+  formatTargetDateIndo,
+} from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import {
   fetchAllAppData,
@@ -132,6 +136,19 @@ export default function CasesPage() {
     }
   };
 
+  const handleUpdateFromDetail = async (caseData: Partial<CaseItem>) => {
+    if (!selectedCase) return;
+    const { updatedCases, savedCase } = await saveCaseItem(
+      caseData,
+      [],
+      selectedCase,
+      cases
+    );
+    setCases(updatedCases);
+    setSelectedCase(savedCase);
+    addCaseNotification(savedCase, false);
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Hapus kasus ini dari database?")) {
       const updatedCases = await removeCaseItem(id, cases);
@@ -168,16 +185,26 @@ export default function CasesPage() {
         .filter(Boolean);
       const photoUrlValue = photoUrls.join(" ; ");
 
+      const formattedDateReported = formatDateReportedIndo(
+        c.date_reported,
+        c.created_at,
+        c.reported_time
+      );
+      const formattedTargetDate = formatTargetDateIndo(
+        c.target_date,
+        c.target_time
+      );
+
       return [
         `"${(c.case_id || "").replace(/"/g, '""')}"`,
-        `"${(c.date_reported || "").replace(/"/g, '""')}"`,
+        `"${formattedDateReported.replace(/"/g, '""')}"`,
         `"${(c.category_name || "").replace(/"/g, '""')}"`,
         `"${(c.case_title || "").replace(/"/g, '""')}"`,
         `"${areaOnly.replace(/"/g, '""')}"`,
         `"${locOnly.replace(/"/g, '""')}"`,
         `"${(c.priority || "").replace(/"/g, '""')}"`,
         `"${(c.pic_name || "").replace(/"/g, '""')}"`,
-        `"${(c.target_date || "").replace(/"/g, '""')}"`,
+        `"${formattedTargetDate.replace(/"/g, '""')}"`,
         `"${(c.status || "").replace(/"/g, '""')}"`,
         c.progress,
         `"${(c.last_update || "").replace(/"/g, '""')}"`,
@@ -316,6 +343,7 @@ export default function CasesPage() {
         onClose={() => setIsDetailOpen(false)}
         caseItem={selectedCase}
         onEdit={handleOpenEdit}
+        onUpdateCase={handleUpdateFromDetail}
       />
     </div>
   );

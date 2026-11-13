@@ -132,6 +132,8 @@ export function CaseModal({
   const [priority, setPriority] = useState<PriorityLevel>("Medium");
   const [picId, setPicId] = useState("");
   const [targetDate, setTargetDate] = useState("");
+  const [targetTime, setTargetTime] = useState("17:00");
+  const [repairDate, setRepairDate] = useState("");
   const [status, setStatus] = useState<CaseStatus>("Open");
   const [progress, setProgress] = useState(0);
   const [remarks, setRemarks] = useState("");
@@ -198,7 +200,9 @@ export function CaseModal({
           pics[0]?.id ||
           ""
       );
-      setTargetDate(initialData.target_date || "");
+      setTargetDate((initialData.target_date || "").slice(0, 10));
+      setTargetTime(initialData.target_time || "17:00");
+      setRepairDate((initialData.repair_date || "").slice(0, 10));
       setStatus(initialData.status || "Open");
       setProgress(initialData.progress || 0);
       setRemarks(initialData.remarks || "");
@@ -216,6 +220,8 @@ export function CaseModal({
       setTargetDate(
         new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0]
       );
+      setTargetTime("17:00");
+      setRepairDate("");
       setStatus("Open");
       setProgress(0);
       setRemarks("");
@@ -299,6 +305,8 @@ export function CaseModal({
           pic_id: selectedPic?.id || picId,
           pic_name: selectedPic?.name || "",
           target_date: targetDate,
+          target_time: targetTime,
+          repair_date: repairDate,
           status,
           progress,
           remarks,
@@ -445,23 +453,39 @@ export function CaseModal({
               </select>
             </div>
 
-            {/* Target Date */}
+            {/* Target Date & Jam */}
             <div>
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1">
-                Target Date *
+                Target Date &amp; Jam *
               </label>
-              <input
-                type="date"
-                required
-                value={targetDate}
-                onChange={(e) => setTargetDate(e.target.value)}
-                onClick={(e) => {
-                  try {
-                    e.currentTarget.showPicker();
-                  } catch {}
-                }}
-                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium cursor-pointer"
-              />
+              <div className="grid grid-cols-5 gap-2">
+                <input
+                  type="date"
+                  required
+                  value={targetDate}
+                  onChange={(e) => setTargetDate(e.target.value)}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker();
+                    } catch {}
+                  }}
+                  className="col-span-3 w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium cursor-pointer"
+                />
+                <input
+                  type="time"
+                  required
+                  value={targetTime}
+                  onChange={(e) => setTargetTime(e.target.value)}
+                  onClick={(e) => {
+                    try {
+                      e.currentTarget.showPicker();
+                    } catch {}
+                  }}
+                  title="Jam Target Penyelesaian"
+                  aria-label="Jam Target Penyelesaian"
+                  className="col-span-2 w-full bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium cursor-pointer"
+                />
+              </div>
             </div>
 
             {/* Status */}
@@ -480,6 +504,38 @@ export function CaseModal({
                 <option value="Escalated">Escalated</option>
                 <option value="Closed">Closed</option>
               </select>
+            </div>
+
+            {/* Tanggal Perbaikan (Opsional - Tampil di Detail) */}
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider">
+                  Tanggal Perbaikan <span className="text-[10px] font-medium normal-case text-slate-400">(Opsional)</span>
+                </label>
+                {repairDate && (
+                  <button
+                    type="button"
+                    onClick={() => setRepairDate("")}
+                    className="text-[10px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+                  >
+                    Hapus
+                  </button>
+                )}
+              </div>
+              <input
+                type="date"
+                value={repairDate}
+                onChange={(e) => setRepairDate(e.target.value)}
+                onClick={(e) => {
+                  try {
+                    e.currentTarget.showPicker();
+                  } catch {}
+                }}
+                className="w-full bg-slate-50 border border-slate-300 rounded-lg px-3 py-2 text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-amber-500 font-medium cursor-pointer"
+              />
+              <p className="text-[10px] text-slate-400 mt-1">
+                Bisa diisi sebelum atau sesudah target date (tampil di Detail)
+              </p>
             </div>
           </div>
 

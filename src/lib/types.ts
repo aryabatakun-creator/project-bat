@@ -54,6 +54,7 @@ export interface CaseItem {
   id: string;
   case_id: string;
   date_reported: string;
+  reported_time?: string;
   category_id?: string;
   category_name?: string;
   case_title: string;
@@ -65,11 +66,14 @@ export interface CaseItem {
   pic_id?: string;
   pic_name?: string;
   target_date: string;
+  target_time?: string;
+  repair_date?: string;
   status: CaseStatus;
   progress: number;
   last_update: string;
   remarks: string;
   created_by?: string;
+  created_at?: string;
   attachments?: CaseAttachment[];
 }
 

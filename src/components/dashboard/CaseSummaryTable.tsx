@@ -3,7 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { CaseItem } from "@/lib/types";
 import { 
-  formatDateIndo, 
+  formatDateIndo,
+  formatDateReportedIndo,
+  formatTargetDateIndo,
   getStatusBadgeStyle, 
   getPriorityBadgeStyle, 
   getCategoryBadgeStyle,
@@ -141,7 +143,11 @@ export function CaseSummaryTable({
 
                   {/* 3. Date Reported */}
                   <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
-                    {formatDateIndo(item.date_reported)}
+                    {formatDateReportedIndo(
+                      item.date_reported,
+                      item.created_at,
+                      item.reported_time
+                    )}
                   </td>
 
                   {/* 4. Category */}
@@ -204,7 +210,7 @@ export function CaseSummaryTable({
 
                   {/* 10. Target Date */}
                   <td className="py-2.5 px-3 text-slate-600 whitespace-nowrap">
-                    {formatDateIndo(item.target_date)}
+                    {formatTargetDateIndo(item.target_date, item.target_time)}
                   </td>
 
                   {/* 11. Status */}

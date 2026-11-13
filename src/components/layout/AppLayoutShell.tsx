@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { HeaderBranding } from "@/components/layout/HeaderBranding";
 import { NotificationProvider, useNotifications } from "@/lib/notificationContext";
@@ -10,6 +10,7 @@ import { CaseDetailModal } from "@/components/cases/CaseDetailModal";
 import { CaseModal } from "@/components/cases/CaseModal";
 import { fetchAllAppData, saveCaseItem, getCachedData } from "@/lib/dataService";
 import { MasterArea, MasterLocation, MasterCategory, MasterPic, CaseItem } from "@/lib/types";
+import { useAuth } from "@/lib/authContext";
 
 function GlobalNotificationHost() {
   const {
@@ -55,6 +56,18 @@ function GlobalNotificationHost() {
     }
   };
 
+  const handleUpdateFromDetail = async (caseData: Partial<CaseItem>) => {
+    if (!detailCase) return;
+    const { updatedCases, savedCase } = await saveCaseItem(
+      caseData,
+      [],
+      detailCase,
+      cases
+    );
+    setCases(updatedCases);
+    addCaseNotification(savedCase, false);
+  };
+
   return (
     <>
       <NotificationToast />
@@ -68,6 +81,7 @@ function GlobalNotificationHost() {
           closeDetail();
           openEdit(item);
         }}
+        onUpdateCase={handleUpdateFromDetail}
       />
 
       {/* Global Case Edit Modal (Opened via Detail modal Edit button) */}
@@ -87,10 +101,31 @@ function GlobalNotificationHost() {
 
 export function AppLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { isAuthenticated, isHydrated } = useAuth();
   const isAuthPage = pathname.startsWith("/auth");
+
+  useEffect(() => {
+    if (isHydrated && !isAuthenticated && !isAuthPage) {
+      router.replace("/auth/login");
+    }
+  }, [isHydrated, isAuthenticated, isAuthPage, router]);
 
   if (isAuthPage) {
     return <main className="min-h-screen bg-slate-950">{children}</main>;
+  }
+
+  if (!isHydrated || !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col items-center justify-center p-4">
+        <div className="bg-white border border-slate-200 rounded-2xl px-6 py-5 shadow-sm flex items-center gap-3">
+          <div className="w-4 h-4 rounded-full border-2 border-amber-500 border-t-transparent animate-spin" />
+          <span className="text-xs font-bold text-slate-700">
+            Memeriksa sesi login...
+          </span>
+        </div>
+      </div>
+    );
   }
 
   return (

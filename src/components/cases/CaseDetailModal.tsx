@@ -1,11 +1,14 @@
 "use client";
 
-import React, { useState } from "react";
-import { X, Calendar, MapPin, User, Clock, Image as ImageIcon, Edit3 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { X, Calendar, MapPin, User, Clock, Image as ImageIcon, Edit3, Wrench, Check } from "lucide-react";
 import { CaseItem } from "@/lib/types";
 import { useAuth } from "@/lib/authContext";
 import {
-  formatDateIndo,
+  formatDateReportedIndo,
+  formatTargetDateIndo,
+  formatRepairDateIndo,
+  getRepairStatusComparison,
   getStatusBadgeStyle,
   getPriorityBadgeStyle,
   getCategoryBadgeStyle,
@@ -17,6 +20,7 @@ interface DetailModalProps {
   onClose: () => void;
   caseItem: CaseItem | null;
   onEdit?: (item: CaseItem) => void;
+  onUpdateCase?: (caseData: Partial<CaseItem>) => Promise<void>;
 }
 
 export function CaseDetailModal({
@@ -24,14 +28,40 @@ export function CaseDetailModal({
   onClose,
   caseItem,
   onEdit,
+  onUpdateCase,
 }: DetailModalProps) {
   const { user } = useAuth();
   const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [repairDateInput, setRepairDateInput] = useState("");
+  const [isSavingRepair, setIsSavingRepair] = useState(false);
+
+  useEffect(() => {
+    if (caseItem) {
+      setRepairDateInput((caseItem.repair_date || "").slice(0, 10));
+    }
+  }, [caseItem]);
 
   if (!isOpen || !caseItem) return null;
 
   const canEdit = user.role === "admin" || user.role === "supervisor";
   const attachments = caseItem.attachments || [];
+  const activeRepairDate = repairDateInput || caseItem.repair_date || "";
+  const repairComparison = getRepairStatusComparison(
+    activeRepairDate,
+    caseItem.target_date,
+    caseItem.target_time
+  );
+
+  const handleSaveRepairDate = async (nextDate: string) => {
+    setRepairDateInput(nextDate);
+    if (!onUpdateCase) return;
+    setIsSavingRepair(true);
+    try {
+      await onUpdateCase({ repair_date: nextDate });
+    } finally {
+      setIsSavingRepair(false);
+    }
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center bg-slate-950/60 backdrop-blur-xs p-3 sm:p-4 overflow-y-auto">
@@ -112,14 +142,72 @@ export function CaseDetailModal({
             <div className="flex items-center gap-2 text-slate-700">
               <Calendar className="w-4 h-4 text-slate-400 shrink-0" />
               <span>
-                <strong>Lapor:</strong> {formatDateIndo(caseItem.date_reported)}
+                <strong>Lapor:</strong>{" "}
+                {formatDateReportedIndo(
+                  caseItem.date_reported,
+                  caseItem.created_at,
+                  caseItem.reported_time
+                )}
               </span>
             </div>
             <div className="flex items-center gap-2 text-slate-700 col-span-2">
               <Clock className="w-4 h-4 text-slate-400 shrink-0" />
               <span>
-                <strong>Target Penyelesaian:</strong> {formatDateIndo(caseItem.target_date)}
+                <strong>Target Penyelesaian:</strong>{" "}
+                {formatTargetDateIndo(caseItem.target_date, caseItem.target_time)}
               </span>
+            </div>
+            <div className="flex flex-col gap-1.5 text-slate-700 col-span-2 pt-2 border-t border-slate-200/80">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
+                  <Wrench className="w-4 h-4 text-amber-500 shrink-0" />
+                  <span>
+                    <strong>Tanggal Perbaikan:</strong>{" "}
+                    {activeRepairDate
+                      ? formatRepairDateIndo(activeRepairDate)
+                      : "Belum diisi"}
+                  </span>
+                </div>
+                {repairComparison && (
+                  <span
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-bold ${repairComparison.style}`}
+                  >
+                    {repairComparison.label}
+                  </span>
+                )}
+              </div>
+              {canEdit && onUpdateCase && (
+                <div className="flex items-center gap-2 pl-6">
+                  <input
+                    type="date"
+                    value={repairDateInput}
+                    disabled={isSavingRepair}
+                    onChange={(e) => handleSaveRepairDate(e.target.value)}
+                    onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker();
+                      } catch {}
+                    }}
+                    aria-label="Tanggal Perbaikan"
+                    className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-[11px] text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
+                  />
+                  {repairDateInput && (
+                    <button
+                      type="button"
+                      disabled={isSavingRepair}
+                      onClick={() => handleSaveRepairDate("")}
+                      className="text-[10px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+                    >
+                      Hapus
+                    </button>
+                  )}
+                  {isSavingRepair && (
+                    <span className="text-[10px] text-amber-600 font-semibold flex items-center gap-1">
+                      <Check className="w-3 h-3" /> Menyimpan...
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 

@@ -133,7 +133,7 @@ export default function DashboardPage() {
       else if (c.status === "Escalated") escalated++;
       else if (c.status === "Closed") closed++;
 
-      if (isOverdue(c.target_date, c.status)) {
+      if (isOverdue(c.target_date, c.status, c.target_time)) {
         overdue++;
       }
     });
@@ -185,6 +185,19 @@ export default function DashboardPage() {
     if (updated) {
       addCaseNotification(updated, false);
     }
+  };
+
+  const handleUpdateFromDetail = async (caseData: Partial<CaseItem>) => {
+    if (!selectedCase) return;
+    const { updatedCases, savedCase } = await saveCaseItem(
+      caseData,
+      [],
+      selectedCase,
+      cases
+    );
+    setCases(updatedCases);
+    setSelectedCase(savedCase);
+    addCaseNotification(savedCase, false);
   };
 
   const handleExportPdf = () => {
@@ -249,6 +262,7 @@ export default function DashboardPage() {
         onClose={() => setIsDetailOpen(false)}
         caseItem={selectedCase}
         onEdit={handleEdit}
+        onUpdateCase={handleUpdateFromDetail}
       />
 
       {/* Edit Modal */}

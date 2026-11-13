@@ -6,12 +6,31 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function isOverdue(targetDate: string, status: CaseStatus): boolean {
-  if (status === "Closed") return false;
+export function isOverdue(
+  targetDate: string,
+  status: CaseStatus,
+  targetTime?: string
+): boolean {
+  if (status === "Closed" || !targetDate) return false;
+  const datePart = targetDate.slice(0, 10);
+  const timeMatch = targetTime?.match(/^(\d{2}:\d{2})/);
+  if (timeMatch) {
+    const target = new Date(`${datePart}T${timeMatch[1]}:00`);
+    if (!isNaN(target.getTime())) {
+      return target < new Date();
+    }
+  }
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const target = new Date(targetDate);
   return target < today;
+}
+
+export function getCurrentTimeHHMM(): string {
+  const now = new Date();
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
 }
 
 export function formatDateIndo(dateStr: string): string {
@@ -22,6 +41,123 @@ export function formatDateIndo(dateStr: string): string {
   const month = String(d.getMonth() + 1).padStart(2, "0");
   const year = d.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+export function formatDateReportedIndo(
+  dateStr: string,
+  createdAt?: string,
+  reportedTime?: string
+): string {
+  if (!dateStr) return "-";
+  const formattedDate = formatDateIndo(dateStr);
+  let timePart = reportedTime?.match(/^(\d{2}:\d{2})/)?.[1] || "";
+
+  if (!timePart && (dateStr.includes("T") || /\d{2}:\d{2}/.test(dateStr))) {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      timePart = `${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
+    }
+  }
+
+  if (!timePart && createdAt) {
+    const c = new Date(createdAt);
+    if (!isNaN(c.getTime())) {
+      timePart = `${String(c.getHours()).padStart(2, "0")}:${String(
+        c.getMinutes()
+      ).padStart(2, "0")}`;
+    }
+  }
+
+  return timePart ? `${formattedDate} ${timePart}` : formattedDate;
+}
+
+export function formatTargetDateIndo(
+  dateStr: string,
+  targetTime?: string
+): string {
+  if (!dateStr) return "-";
+  const formattedDate = formatDateIndo(dateStr);
+  let timePart = targetTime?.match(/^(\d{2}:\d{2})/)?.[1] || "";
+
+  if (!timePart && (dateStr.includes("T") || /\d{2}:\d{2}/.test(dateStr))) {
+    const d = new Date(dateStr);
+    if (!isNaN(d.getTime())) {
+      timePart = `${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
+    }
+  }
+
+  return timePart ? `${formattedDate} ${timePart}` : formattedDate;
+}
+
+export function formatRepairDateIndo(repairDate?: string): string {
+  if (!repairDate) return "-";
+  const formattedDate = formatDateIndo(repairDate);
+  if (repairDate.includes("T") || /\d{2}:\d{2}/.test(repairDate)) {
+    const d = new Date(repairDate);
+    if (!isNaN(d.getTime())) {
+      const hh = String(d.getHours()).padStart(2, "0");
+      const mm = String(d.getMinutes()).padStart(2, "0");
+      return `${formattedDate} ${hh}:${mm}`;
+    }
+  }
+  return formattedDate;
+}
+
+export function getRepairStatusComparison(
+  repairDate?: string,
+  targetDate?: string,
+  targetTime?: string
+): { label: string; style: string } | null {
+  if (!repairDate || !targetDate) return null;
+  const repairDay = repairDate.slice(0, 10);
+  const targetDay = targetDate.slice(0, 10);
+
+  const repairHasTime = repairDate.includes("T") || /\d{2}:\d{2}/.test(repairDate);
+  const targetTimeValid = targetTime?.match(/^(\d{2}:\d{2})/)?.[1];
+
+  if (repairHasTime && targetTimeValid) {
+    const rDate = new Date(repairDate);
+    const tDate = new Date(`${targetDay}T${targetTimeValid}:00`);
+    if (!isNaN(rDate.getTime()) && !isNaN(tDate.getTime())) {
+      if (rDate < tDate) {
+        return {
+          label: "Lebih Cepat dari Target",
+          style: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+        };
+      }
+      if (rDate.getTime() === tDate.getTime()) {
+        return {
+          label: "Tepat Waktu (Sesuai Target)",
+          style: "bg-sky-100 text-sky-800 border border-sky-300",
+        };
+      }
+      return {
+        label: "Melewati Target Date",
+        style: "bg-rose-100 text-rose-800 border border-rose-300",
+      };
+    }
+  }
+
+  if (repairDay < targetDay) {
+    return {
+      label: "Lebih Cepat dari Target",
+      style: "bg-emerald-100 text-emerald-800 border border-emerald-300",
+    };
+  }
+  if (repairDay === targetDay) {
+    return {
+      label: "Tepat Waktu (Sesuai Target)",
+      style: "bg-sky-100 text-sky-800 border border-sky-300",
+    };
+  }
+  return {
+    label: "Melewati Target Date",
+    style: "bg-rose-100 text-rose-800 border border-rose-300",
+  };
 }
 
 export function getStatusBadgeStyle(status: CaseStatus | string): string {

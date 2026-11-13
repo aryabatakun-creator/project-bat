@@ -2,7 +2,7 @@
 
 import React from "react";
 import { CaseItem, FilterState } from "@/lib/types";
-import { formatDateIndo } from "@/lib/utils";
+import { formatDateReportedIndo, formatTargetDateIndo } from "@/lib/utils";
 
 interface ExecutivePrintReportProps {
   cases: CaseItem[];
@@ -475,7 +475,11 @@ export function ExecutivePrintReport({
                       {item.case_id}
                     </td>
                     <td className="border border-slate-300 py-1 px-1.5 whitespace-nowrap">
-                      {formatDateIndo(item.date_reported)}
+                      {formatDateReportedIndo(
+                        item.date_reported,
+                        item.created_at,
+                        item.reported_time
+                      )}
                     </td>
                     <td className="border border-slate-300 py-1 px-1.5">
                       {item.category_name || "-"}
@@ -504,7 +508,7 @@ export function ExecutivePrintReport({
                       {item.pic_name || "-"}
                     </td>
                     <td className="border border-slate-300 py-1 px-1.5 whitespace-nowrap">
-                      {formatDateIndo(item.target_date)}
+                      {formatTargetDateIndo(item.target_date, item.target_time)}
                     </td>
                     <td className="border border-slate-300 py-1 px-1.5 text-center whitespace-nowrap">
                       <span

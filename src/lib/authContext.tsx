@@ -6,6 +6,8 @@ import { createClient } from "./supabase/client";
 
 interface AuthContextType {
   user: UserProfile;
+  isAuthenticated: boolean;
+  isHydrated: boolean;
   setUserProfile: (profile: UserProfile) => void;
   setRole: (role: AppRole) => void;
   login: (email: string, role?: AppRole, fullName?: string, userId?: string) => Promise<boolean>;
@@ -13,15 +15,19 @@ interface AuthContextType {
   isLoading: boolean;
 }
 
-const defaultUser: UserProfile = {
-  id: "user-admin-1",
-  full_name: "Admin Operasional",
-  role: "admin",
-  email: "admin@bat-tracker.com",
+const SESSION_KEY = "bat_auth_session_v2";
+
+const guestUser: UserProfile = {
+  id: "",
+  full_name: "",
+  role: "supervisor",
+  email: "",
 };
 
 const AuthContext = createContext<AuthContextType>({
-  user: defaultUser,
+  user: guestUser,
+  isAuthenticated: false,
+  isHydrated: false,
   setUserProfile: () => {},
   setRole: () => {},
   login: async () => true,
@@ -30,36 +36,35 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<UserProfile>(() => {
-    if (typeof window !== "undefined") {
-      const savedUser = localStorage.getItem("bat_active_user");
-      if (savedUser) {
-        try {
-          return JSON.parse(savedUser);
-        } catch {
-          // ignore
-        }
-      }
-      const savedRole = localStorage.getItem("bat_active_role") as AppRole;
-      if (savedRole) {
-        return {
-          ...defaultUser,
-          role: savedRole,
-          full_name:
-            savedRole === "admin"
-              ? "Admin Operasional"
-              : savedRole === "management"
-              ? "Area Management"
-              : "Field Supervisor",
-        };
-      }
-    }
-    return defaultUser;
-  });
-
+  const [user, setUser] = useState<UserProfile>(guestUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    let restored = false;
+    if (typeof window !== "undefined") {
+      const savedSession = localStorage.getItem(SESSION_KEY);
+      if (savedSession) {
+        try {
+          const parsed = JSON.parse(savedSession) as UserProfile;
+          if (parsed && parsed.email && parsed.role) {
+            setUser(parsed);
+            setIsAuthenticated(true);
+            restored = true;
+          }
+        } catch {
+          localStorage.removeItem(SESSION_KEY);
+        }
+      }
+      if (!restored) {
+        // Clear legacy auto-admin fallback keys so unauthenticated users must login first
+        localStorage.removeItem("bat_active_user");
+        localStorage.removeItem("bat_active_role");
+      }
+    }
+    setIsHydrated(true);
+
     const supabase = createClient();
     if (!supabase) return;
 
@@ -79,7 +84,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 email: authUser.email,
               };
               setUser(u);
+              setIsAuthenticated(true);
               if (typeof window !== "undefined") {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(u));
                 localStorage.setItem("bat_active_user", JSON.stringify(u));
               }
             }
@@ -90,13 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const setUserProfile = (profile: UserProfile) => {
     setUser(profile);
+    setIsAuthenticated(true);
     if (typeof window !== "undefined") {
+      localStorage.setItem(SESSION_KEY, JSON.stringify(profile));
       localStorage.setItem("bat_active_user", JSON.stringify(profile));
       localStorage.setItem("bat_active_role", profile.role);
     }
   };
 
   const setRole = (role: AppRole) => {
+    if (!isAuthenticated) return;
     const updated = {
       ...user,
       role,
@@ -137,13 +147,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await supabase.auth.signOut();
     }
     if (typeof window !== "undefined") {
+      localStorage.removeItem(SESSION_KEY);
       localStorage.removeItem("bat_active_user");
+      localStorage.removeItem("bat_active_role");
     }
-    setUser(defaultUser);
+    setIsAuthenticated(false);
+    setUser(guestUser);
   };
 
   return (
-    <AuthContext.Provider value={{ user, setUserProfile, setRole, login, logout, isLoading }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated,
+        isHydrated,
+        setUserProfile,
+        setRole,
+        login,
+        logout,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

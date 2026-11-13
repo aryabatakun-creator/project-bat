@@ -14,6 +14,55 @@ import {
   initialPics,
   initialCases,
 } from "./mockData";
+import { getCurrentTimeHHMM } from "./utils";
+
+const META_REGEX = /\n?\[BAT_META:(\{.*\})\]\s*$/;
+
+interface PackedCaseMeta {
+  rt?: string;
+  tt?: string;
+  rd?: string;
+}
+
+export function packCaseMetaIntoRemarks(
+  remarks: string,
+  meta: PackedCaseMeta
+): string {
+  const clean = (remarks || "").replace(META_REGEX, "").trimEnd();
+  const payload: PackedCaseMeta = {};
+  if (meta.rt) payload.rt = meta.rt;
+  if (meta.tt) payload.tt = meta.tt;
+  if (meta.rd) payload.rd = meta.rd;
+  if (Object.keys(payload).length === 0) return clean;
+  return clean
+    ? `${clean}\n[BAT_META:${JSON.stringify(payload)}]`
+    : `[BAT_META:${JSON.stringify(payload)}]`;
+}
+
+export function unpackCaseMetaFromRemarks(rawRemarks?: string | null): {
+  cleanRemarks: string;
+  reported_time?: string;
+  target_time?: string;
+  repair_date?: string;
+} {
+  const text = rawRemarks || "";
+  const match = text.match(META_REGEX);
+  if (!match) {
+    return { cleanRemarks: text };
+  }
+  const cleanRemarks = text.replace(META_REGEX, "").trimEnd();
+  try {
+    const parsed = JSON.parse(match[1]) as PackedCaseMeta;
+    return {
+      cleanRemarks,
+      reported_time: parsed.rt || undefined,
+      target_time: parsed.tt || undefined,
+      repair_date: parsed.rd || undefined,
+    };
+  } catch {
+    return { cleanRemarks };
+  }
+}
 
 const KEYS = {
   CASES: "bat_cache_cases_v3",
@@ -225,6 +274,8 @@ export async function fetchAllAppData(): Promise<{
             parsedLocation = parts.slice(1).join(" - ").trim();
           }
 
+          const unpacked = unpackCaseMetaFromRemarks(c.remarks);
+
           if (localMatch && localMatch._localModified) {
             return {
               ...c,
@@ -232,12 +283,35 @@ export async function fetchAllAppData(): Promise<{
               id: c.id,
               area_name: localMatch.area_name || parsedArea,
               location_name: localMatch.location_name || parsedLocation || "-",
+              reported_time:
+                localMatch.reported_time ||
+                c.reported_time ||
+                unpacked.reported_time,
+              target_time:
+                localMatch.target_time || c.target_time || unpacked.target_time,
+              repair_date:
+                localMatch.repair_date !== undefined
+                  ? localMatch.repair_date
+                  : c.repair_date ?? unpacked.repair_date ?? "",
+              created_at: c.created_at || localMatch.created_at,
               attachments: mergedAttachments,
             };
           }
 
           return {
             ...c,
+            remarks: unpacked.cleanRemarks,
+            reported_time:
+              c.reported_time ||
+              unpacked.reported_time ||
+              localMatch?.reported_time,
+            target_time:
+              c.target_time || unpacked.target_time || localMatch?.target_time,
+            repair_date:
+              c.repair_date !== undefined
+                ? c.repair_date
+                : unpacked.repair_date ?? localMatch?.repair_date ?? "",
+            created_at: c.created_at || localMatch?.created_at,
             category_name:
               c.master_categories?.name ||
               c.category_name ||
@@ -429,9 +503,28 @@ export async function saveCaseItem(
         : editingCase.attachments || [];
     const mergedAttachments = [...existingAttachments, ...newAttachments];
 
+    const resolvedReportedTime =
+      caseData.reported_time ?? editingCase.reported_time;
+    const resolvedTargetTime =
+      caseData.target_time !== undefined
+        ? caseData.target_time
+        : editingCase.target_time;
+    const resolvedRepairDate =
+      caseData.repair_date !== undefined
+        ? caseData.repair_date
+        : editingCase.repair_date;
+    const rawCleanRemarks =
+      caseData.remarks !== undefined ? caseData.remarks : editingCase.remarks;
+    const cleanRemarks = unpackCaseMetaFromRemarks(rawCleanRemarks).cleanRemarks;
+
     let updatedCase: CaseItem & { _localModified?: boolean } = {
       ...editingCase,
       ...caseData,
+      remarks: cleanRemarks,
+      reported_time: resolvedReportedTime,
+      target_time: resolvedTargetTime,
+      repair_date: resolvedRepairDate,
+      created_at: editingCase.created_at,
       last_update: new Date().toISOString().split("T")[0],
       attachments: mergedAttachments,
       _localModified: true,
@@ -458,13 +551,19 @@ export async function saveCaseItem(
         resolveMasterId("master_pics", updatedCase.pic_id, updatedCase.pic_name),
       ]);
 
+      const packedRemarks = packCaseMetaIntoRemarks(updatedCase.remarks, {
+        rt: updatedCase.reported_time,
+        tt: updatedCase.target_time,
+        rd: updatedCase.repair_date,
+      });
+
       const baseUpdatePayload: Record<string, any> = {
         case_title: updatedCase.case_title,
         status: updatedCase.status,
         progress: updatedCase.progress,
-        remarks: updatedCase.remarks,
+        remarks: packedRemarks,
         priority: updatedCase.priority,
-        target_date: updatedCase.target_date,
+        target_date: (updatedCase.target_date || "").slice(0, 10),
       };
       if (resolvedCatId) baseUpdatePayload.category_id = resolvedCatId;
       if (resolvedAreaId) baseUpdatePayload.area_id = resolvedAreaId;
@@ -535,10 +634,19 @@ export async function saveCaseItem(
       case_id: tempId,
     }));
 
+    const nowIso = new Date().toISOString();
+    const autoReportedTime = caseData.reported_time || getCurrentTimeHHMM();
+    const cleanReportDate = reportDate.slice(0, 10);
+    const cleanTargetDate = (
+      caseData.target_date || new Date().toISOString().split("T")[0]
+    ).slice(0, 10);
+    const cleanRemarks = unpackCaseMetaFromRemarks(caseData.remarks || "").cleanRemarks;
+
     let newCase: CaseItem = {
       id: tempId,
       case_id: targetCaseId,
-      date_reported: reportDate,
+      date_reported: cleanReportDate,
+      reported_time: autoReportedTime,
       case_title: caseData.case_title || "Kasus Baru",
       category_id: caseData.category_id,
       category_name: caseData.category_name || "Operasional",
@@ -549,12 +657,14 @@ export async function saveCaseItem(
       priority: caseData.priority || "Medium",
       pic_id: caseData.pic_id,
       pic_name: caseData.pic_name || "PIC",
-      target_date:
-        caseData.target_date || new Date().toISOString().split("T")[0],
+      target_date: cleanTargetDate,
+      target_time: caseData.target_time || "17:00",
+      repair_date: caseData.repair_date || "",
       status: caseData.status || "Open",
       progress: caseData.progress ?? 0,
       last_update: new Date().toISOString().split("T")[0],
-      remarks: caseData.remarks || "",
+      remarks: cleanRemarks,
+      created_at: nowIso,
       attachments: attachmentsWithCaseId,
     };
 
@@ -573,6 +683,12 @@ export async function saveCaseItem(
         resolveMasterId("master_pics", newCase.pic_id, newCase.pic_name),
       ]);
 
+      const packedRemarks = packCaseMetaIntoRemarks(newCase.remarks, {
+        rt: newCase.reported_time,
+        tt: newCase.target_time,
+        rd: newCase.repair_date,
+      });
+
       const baseInsertPayload: Record<string, any> = {
         case_id: newCase.case_id,
         date_reported: newCase.date_reported,
@@ -584,7 +700,7 @@ export async function saveCaseItem(
         status: newCase.status,
         progress: newCase.progress,
         target_date: newCase.target_date,
-        remarks: newCase.remarks,
+        remarks: packedRemarks,
       };
 
       let inserted: any = null;
@@ -682,9 +798,25 @@ export async function saveCaseItem(
           }
         }
 
+        const unpackedInserted = unpackCaseMetaFromRemarks(inserted.remarks);
+
         newCase = {
           ...newCase,
           ...inserted,
+          remarks: unpackedInserted.cleanRemarks,
+          reported_time:
+            inserted.reported_time ||
+            unpackedInserted.reported_time ||
+            newCase.reported_time,
+          target_time:
+            inserted.target_time ||
+            unpackedInserted.target_time ||
+            newCase.target_time,
+          repair_date:
+            inserted.repair_date !== undefined
+              ? inserted.repair_date
+              : unpackedInserted.repair_date ?? newCase.repair_date,
+          created_at: inserted.created_at || newCase.created_at,
           category_name:
             inserted.master_categories?.name || newCase.category_name,
           area_name: inserted.master_areas?.name || newCase.area_name,
