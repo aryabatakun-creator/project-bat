@@ -68,6 +68,7 @@ export interface CaseItem {
   target_date: string;
   target_time?: string;
   repair_date?: string;
+  repair_time?: string;
   status: CaseStatus;
   progress: number;
   last_update: string;

@@ -9,6 +9,7 @@ import {
   formatTargetDateIndo,
   formatRepairDateIndo,
   getRepairStatusComparison,
+  getCurrentTimeHHMM,
   getStatusBadgeStyle,
   getPriorityBadgeStyle,
   getCategoryBadgeStyle,
@@ -33,11 +34,15 @@ export function CaseDetailModal({
   const { user } = useAuth();
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [repairDateInput, setRepairDateInput] = useState("");
+  const [repairTimeInput, setRepairTimeInput] = useState("");
   const [isSavingRepair, setIsSavingRepair] = useState(false);
 
   useEffect(() => {
     if (caseItem) {
       setRepairDateInput((caseItem.repair_date || "").slice(0, 10));
+      setRepairTimeInput(
+        caseItem.repair_time || (caseItem.repair_date ? "17:00" : "")
+      );
     }
   }, [caseItem]);
 
@@ -46,18 +51,29 @@ export function CaseDetailModal({
   const canEdit = user.role === "admin" || user.role === "supervisor";
   const attachments = caseItem.attachments || [];
   const activeRepairDate = repairDateInput || caseItem.repair_date || "";
+  const activeRepairTime = repairTimeInput || caseItem.repair_time || "";
   const repairComparison = getRepairStatusComparison(
     activeRepairDate,
     caseItem.target_date,
-    caseItem.target_time
+    caseItem.target_time,
+    activeRepairTime
   );
 
-  const handleSaveRepairDate = async (nextDate: string) => {
+  const handleSaveRepairDateTime = async (nextDate: string, nextTime?: string) => {
+    const resolvedTime = nextDate
+      ? nextTime !== undefined
+        ? nextTime
+        : repairTimeInput || getCurrentTimeHHMM()
+      : "";
     setRepairDateInput(nextDate);
+    setRepairTimeInput(resolvedTime);
     if (!onUpdateCase) return;
     setIsSavingRepair(true);
     try {
-      await onUpdateCase({ repair_date: nextDate });
+      await onUpdateCase({
+        repair_date: nextDate,
+        repair_time: resolvedTime,
+      });
     } finally {
       setIsSavingRepair(false);
     }
@@ -164,7 +180,7 @@ export function CaseDetailModal({
                   <span>
                     <strong>Tanggal Perbaikan:</strong>{" "}
                     {activeRepairDate
-                      ? formatRepairDateIndo(activeRepairDate)
+                      ? formatRepairDateIndo(activeRepairDate, activeRepairTime)
                       : "Belum diisi"}
                   </span>
                 </div>
@@ -177,12 +193,12 @@ export function CaseDetailModal({
                 )}
               </div>
               {canEdit && onUpdateCase && (
-                <div className="flex items-center gap-2 pl-6">
+                <div className="flex items-center gap-2 pl-6 flex-wrap">
                   <input
                     type="date"
                     value={repairDateInput}
                     disabled={isSavingRepair}
-                    onChange={(e) => handleSaveRepairDate(e.target.value)}
+                    onChange={(e) => handleSaveRepairDateTime(e.target.value)}
                     onClick={(e) => {
                       try {
                         e.currentTarget.showPicker();
@@ -191,11 +207,27 @@ export function CaseDetailModal({
                     aria-label="Tanggal Perbaikan"
                     className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-[11px] text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer"
                   />
+                  <input
+                    type="time"
+                    value={repairTimeInput}
+                    disabled={isSavingRepair || !repairDateInput}
+                    onChange={(e) =>
+                      handleSaveRepairDateTime(repairDateInput, e.target.value)
+                    }
+                    onClick={(e) => {
+                      try {
+                        e.currentTarget.showPicker();
+                      } catch {}
+                    }}
+                    title="Jam Perbaikan"
+                    aria-label="Jam Perbaikan"
+                    className="bg-white border border-slate-300 rounded-lg px-2.5 py-1 text-[11px] text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-amber-500 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  />
                   {repairDateInput && (
                     <button
                       type="button"
                       disabled={isSavingRepair}
-                      onClick={() => handleSaveRepairDate("")}
+                      onClick={() => handleSaveRepairDateTime("", "")}
                       className="text-[10px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
                     >
                       Hapus

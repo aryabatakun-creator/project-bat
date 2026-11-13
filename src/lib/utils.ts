@@ -93,34 +93,57 @@ export function formatTargetDateIndo(
   return timePart ? `${formattedDate} ${timePart}` : formattedDate;
 }
 
-export function formatRepairDateIndo(repairDate?: string): string {
+export function formatRepairDateIndo(
+  repairDate?: string,
+  repairTime?: string
+): string {
   if (!repairDate) return "-";
   const formattedDate = formatDateIndo(repairDate);
-  if (repairDate.includes("T") || /\d{2}:\d{2}/.test(repairDate)) {
+  let timePart = repairTime?.match(/^(\d{2}:\d{2})/)?.[1] || "";
+
+  if (!timePart && (repairDate.includes("T") || /\d{2}:\d{2}/.test(repairDate))) {
     const d = new Date(repairDate);
     if (!isNaN(d.getTime())) {
-      const hh = String(d.getHours()).padStart(2, "0");
-      const mm = String(d.getMinutes()).padStart(2, "0");
-      return `${formattedDate} ${hh}:${mm}`;
+      timePart = `${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
     }
   }
-  return formattedDate;
+  return timePart ? `${formattedDate} ${timePart}` : formattedDate;
 }
 
 export function getRepairStatusComparison(
   repairDate?: string,
   targetDate?: string,
-  targetTime?: string
+  targetTime?: string,
+  repairTime?: string
 ): { label: string; style: string } | null {
   if (!repairDate || !targetDate) return null;
   const repairDay = repairDate.slice(0, 10);
   const targetDay = targetDate.slice(0, 10);
 
-  const repairHasTime = repairDate.includes("T") || /\d{2}:\d{2}/.test(repairDate);
-  const targetTimeValid = targetTime?.match(/^(\d{2}:\d{2})/)?.[1];
+  let repairTimeValid = repairTime?.match(/^(\d{2}:\d{2})/)?.[1] || "";
+  if (!repairTimeValid && (repairDate.includes("T") || /\d{2}:\d{2}/.test(repairDate))) {
+    const d = new Date(repairDate);
+    if (!isNaN(d.getTime())) {
+      repairTimeValid = `${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
+    }
+  }
 
-  if (repairHasTime && targetTimeValid) {
-    const rDate = new Date(repairDate);
+  let targetTimeValid = targetTime?.match(/^(\d{2}:\d{2})/)?.[1] || "";
+  if (!targetTimeValid && (targetDate.includes("T") || /\d{2}:\d{2}/.test(targetDate))) {
+    const d = new Date(targetDate);
+    if (!isNaN(d.getTime())) {
+      targetTimeValid = `${String(d.getHours()).padStart(2, "0")}:${String(
+        d.getMinutes()
+      ).padStart(2, "0")}`;
+    }
+  }
+
+  if (repairTimeValid && targetTimeValid) {
+    const rDate = new Date(`${repairDay}T${repairTimeValid}:00`);
     const tDate = new Date(`${targetDay}T${targetTimeValid}:00`);
     if (!isNaN(rDate.getTime()) && !isNaN(tDate.getTime())) {
       if (rDate < tDate) {

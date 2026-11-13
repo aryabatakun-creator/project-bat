@@ -22,6 +22,7 @@ interface PackedCaseMeta {
   rt?: string;
   tt?: string;
   rd?: string;
+  rpt?: string;
 }
 
 export function packCaseMetaIntoRemarks(
@@ -33,6 +34,7 @@ export function packCaseMetaIntoRemarks(
   if (meta.rt) payload.rt = meta.rt;
   if (meta.tt) payload.tt = meta.tt;
   if (meta.rd) payload.rd = meta.rd;
+  if (meta.rpt) payload.rpt = meta.rpt;
   if (Object.keys(payload).length === 0) return clean;
   return clean
     ? `${clean}\n[BAT_META:${JSON.stringify(payload)}]`
@@ -44,6 +46,7 @@ export function unpackCaseMetaFromRemarks(rawRemarks?: string | null): {
   reported_time?: string;
   target_time?: string;
   repair_date?: string;
+  repair_time?: string;
 } {
   const text = rawRemarks || "";
   const match = text.match(META_REGEX);
@@ -58,6 +61,7 @@ export function unpackCaseMetaFromRemarks(rawRemarks?: string | null): {
       reported_time: parsed.rt || undefined,
       target_time: parsed.tt || undefined,
       repair_date: parsed.rd || undefined,
+      repair_time: parsed.rpt || undefined,
     };
   } catch {
     return { cleanRemarks };
@@ -65,16 +69,21 @@ export function unpackCaseMetaFromRemarks(rawRemarks?: string | null): {
 }
 
 const KEYS = {
-  CASES: "bat_cache_cases_v3",
-  AREAS: "bat_cache_areas_v3",
-  LOCATIONS: "bat_cache_locations_v3",
-  CATEGORIES: "bat_cache_categories_v3",
-  PICS: "bat_cache_pics_v3",
+  CASES: "bat_cache_cases_v4",
+  AREAS: "bat_cache_areas_v4",
+  LOCATIONS: "bat_cache_locations_v4",
+  CATEGORIES: "bat_cache_categories_v4",
+  PICS: "bat_cache_pics_v4",
 };
 
-// Purge legacy poisoned tombstone caches from client localStorage
+// Purge legacy caches & tombstone caches from client localStorage
 if (typeof window !== "undefined") {
   try {
+    localStorage.removeItem("bat_cache_cases_v3");
+    localStorage.removeItem("bat_cache_areas_v3");
+    localStorage.removeItem("bat_cache_locations_v3");
+    localStorage.removeItem("bat_cache_categories_v3");
+    localStorage.removeItem("bat_cache_pics_v3");
     localStorage.removeItem("bat_deleted_ids_v3");
     localStorage.removeItem("bat_deleted_ids_v2");
     localStorage.removeItem("bat_deleted_ids_v1");
@@ -293,6 +302,10 @@ export async function fetchAllAppData(): Promise<{
                 localMatch.repair_date !== undefined
                   ? localMatch.repair_date
                   : c.repair_date ?? unpacked.repair_date ?? "",
+              repair_time:
+                localMatch.repair_time !== undefined
+                  ? localMatch.repair_time
+                  : c.repair_time ?? unpacked.repair_time ?? "",
               created_at: c.created_at || localMatch.created_at,
               attachments: mergedAttachments,
             };
@@ -311,6 +324,10 @@ export async function fetchAllAppData(): Promise<{
               c.repair_date !== undefined
                 ? c.repair_date
                 : unpacked.repair_date ?? localMatch?.repair_date ?? "",
+            repair_time:
+              c.repair_time !== undefined
+                ? c.repair_time
+                : unpacked.repair_time ?? localMatch?.repair_time ?? "",
             created_at: c.created_at || localMatch?.created_at,
             category_name:
               c.master_categories?.name ||
@@ -513,6 +530,10 @@ export async function saveCaseItem(
       caseData.repair_date !== undefined
         ? caseData.repair_date
         : editingCase.repair_date;
+    const resolvedRepairTime =
+      caseData.repair_time !== undefined
+        ? caseData.repair_time
+        : editingCase.repair_time;
     const rawCleanRemarks =
       caseData.remarks !== undefined ? caseData.remarks : editingCase.remarks;
     const cleanRemarks = unpackCaseMetaFromRemarks(rawCleanRemarks).cleanRemarks;
@@ -524,6 +545,7 @@ export async function saveCaseItem(
       reported_time: resolvedReportedTime,
       target_time: resolvedTargetTime,
       repair_date: resolvedRepairDate,
+      repair_time: resolvedRepairTime,
       created_at: editingCase.created_at,
       last_update: new Date().toISOString().split("T")[0],
       attachments: mergedAttachments,
@@ -555,6 +577,7 @@ export async function saveCaseItem(
         rt: updatedCase.reported_time,
         tt: updatedCase.target_time,
         rd: updatedCase.repair_date,
+        rpt: updatedCase.repair_time,
       });
 
       const baseUpdatePayload: Record<string, any> = {
@@ -660,6 +683,7 @@ export async function saveCaseItem(
       target_date: cleanTargetDate,
       target_time: caseData.target_time || "17:00",
       repair_date: caseData.repair_date || "",
+      repair_time: caseData.repair_time || "",
       status: caseData.status || "Open",
       progress: caseData.progress ?? 0,
       last_update: new Date().toISOString().split("T")[0],
@@ -687,6 +711,7 @@ export async function saveCaseItem(
         rt: newCase.reported_time,
         tt: newCase.target_time,
         rd: newCase.repair_date,
+        rpt: newCase.repair_time,
       });
 
       const baseInsertPayload: Record<string, any> = {
@@ -816,6 +841,10 @@ export async function saveCaseItem(
             inserted.repair_date !== undefined
               ? inserted.repair_date
               : unpackedInserted.repair_date ?? newCase.repair_date,
+          repair_time:
+            inserted.repair_time !== undefined
+              ? inserted.repair_time
+              : unpackedInserted.repair_time ?? newCase.repair_time,
           created_at: inserted.created_at || newCase.created_at,
           category_name:
             inserted.master_categories?.name || newCase.category_name,

@@ -84,11 +84,12 @@ CREATE TABLE IF NOT EXISTS cases (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Pastikan kolom location_id, location_name, target_time, & repair_date ada jika tabel cases sudah dibuat sebelumnya
+-- Pastikan kolom location_id, location_name, target_time, repair_date, & repair_time ada jika tabel cases sudah dibuat sebelumnya
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS location_id UUID REFERENCES master_locations(id) ON DELETE SET NULL;
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS location_name VARCHAR(150);
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS target_time VARCHAR(10);
 ALTER TABLE cases ADD COLUMN IF NOT EXISTS repair_date DATE;
+ALTER TABLE cases ADD COLUMN IF NOT EXISTS repair_time VARCHAR(10);
 
 -- 6. CASE ATTACHMENTS TABLE (Supabase Storage / Base64 Metadata)
 CREATE TABLE IF NOT EXISTS case_attachments (
